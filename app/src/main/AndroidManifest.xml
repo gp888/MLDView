@@ -30,6 +30,7 @@
         <activity android:name=".SearchViewActivity"/>
         <activity android:name=".MySearchViewActivity"/>
         <activity android:name=".BasicViewActivity"/>
+        <activity android:name=".SetPolyToPolyActivity"/>
     </application>
 
 </manifest>

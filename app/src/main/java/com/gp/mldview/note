@@ -1,0 +1,17 @@
+两种获取view在屏幕上的位置。
+@Override
+protected void onDraw(Canvas canvas) {
+    float[] values = new float[9];
+    int[] location1 = new int[2];
+
+    Matrix matrix = canvas.getMatrix();
+    matrix.getValues(values);
+
+    location1[0] = (int) values[2];
+    location1[1] = (int) values[5];
+    Log.i(TAG, "location1 = " + Arrays.toString(location1));
+
+    int[] location2 = new int[2];
+    this.getLocationOnScreen(location2);
+    Log.i(TAG, "location2 = " + Arrays.toString(location2));
+}

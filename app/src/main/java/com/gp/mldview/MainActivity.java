@@ -35,6 +35,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 case R.id.mysearch:
                     startActivity(new Intent(MainActivity.this, MySearchViewActivity.class));
                     break;
+                case R.id.setPoly:
+                    startActivity(new Intent(MainActivity.this, SetPolyToPolyActivity.class));
+                    break;
             }
         }
     };
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         findViewById(R.id.pie).setOnClickListener(listener);
         findViewById(R.id.search).setOnClickListener(listener);
         findViewById(R.id.mysearch).setOnClickListener(listener);
+        findViewById(R.id.setPoly).setOnClickListener(listener);
 
 
 
