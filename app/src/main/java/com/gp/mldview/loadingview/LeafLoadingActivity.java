@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
@@ -13,10 +14,11 @@ import android.widget.TextView;
 
 import com.gp.mldview.R;
 
+import java.util.Arrays;
 import java.util.Random;
 
-public class LeafLoadingActivity extends Activity implements SeekBar.OnSeekBarChangeListener,
-        View.OnClickListener {
+public class LeafLoadingActivity extends Activity implements SeekBar.OnSeekBarChangeListener, View.OnClickListener {
+    private static final String TAG = LeafLoadingActivity.class.getSimpleName();
   
     Handler mHandler = new Handler() {
         @Override
@@ -149,7 +151,7 @@ public class LeafLoadingActivity extends Activity implements SeekBar.OnSeekBarCh
   
     @Override  
     public void onClick(View v) {  
-        if (v == mClearButton) {  
+        if (v == mClearButton) {
             mLeafLoadingView.setProgress(0);  
             mHandler.removeCallbacksAndMessages(null);  
             mProgress = 0;  

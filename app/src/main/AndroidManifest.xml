@@ -31,6 +31,7 @@
         <activity android:name=".MySearchViewActivity"/>
         <activity android:name=".BasicViewActivity"/>
         <activity android:name=".SetPolyToPolyActivity"/>
+        <activity android:name=".CameraRotateActivity"/>
     </application>
 
 </manifest>

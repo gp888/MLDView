@@ -1,3 +1,17 @@
+View.getLocationInWindow(int[] location) getLeft , getTop, getBottom, getRight
+一个控件在其父窗口中的坐标位置
+
+View.getLocationOnScreen(int[] location)
+
+一个控件在其整个屏幕上的坐标位置
+
+如果在Activity的OnCreate()事件输出那些参数，是全为0，要等UI控件都加载完了才能获取到这些。
+在onWindowFocusChanged(boolean hasFocus)中获取为好。
+
+getLocalVisibleRect ， 返回一个填充的Rect对象，  ？？ sdk上也没注释,根据经验应该是获取控件相对在父亲里的一个Rect对象，left，top取到的是0
+getGlobalVisibleRect ， 获取全局坐标系的一个视图区域， 返回一个填充的Rect对象。 但是！！！ left能准确的获取， bottom属性就获取不准确， 不知道杂搞的
+
+
 两种获取view在屏幕上的位置。
 @Override
 protected void onDraw(Canvas canvas) {
@@ -15,3 +29,39 @@ protected void onDraw(Canvas canvas) {
     this.getLocationOnScreen(location2);
     Log.i(TAG, "location2 = " + Arrays.toString(location2));
 }
+
+
+
+<RelativeLayout
+    android:background="#CCC"
+    android:id="@+id/layout"
+    android:onClick="myClick"
+    android:layout_width="200dp"
+    android:layout_height="200dp">
+    <View
+        android:clickable="true"
+        android:layout_width="200dp"
+        android:layout_height="200dp" />
+</RelativeLayout>
+
+现在你有了一个 RelativeLayout - View 你为 RelativeLayout 设置了一个点击事件myClick，然而你会发现不论怎么点都不会接收到信息，仔细一看，发现内部的 View 有一个属性 android:clickable="true" 正是这个看似不起眼的属性把事件给消费掉了，由此我们可以得出如下结论:
+1. 不论 View 自身是否注册点击事件，只要 View 是可点击的就会消费事件。
+2. 事件是否被消费由返回值决定，true 表示消费，false 表示不消费，与是否使用了事件无关。
+
+
+
+
+
+1.可点击，可点击包括很多种情况，只要你给View注册了 onClickListener、onLongClickListener、OnContextClickListener 其中的任何一个监听器或者设置了 android:clickable=”true” 就代表这个 View 是可点击的。
+另外，某些 View 默认就是可点击的，例如，Button，CheckBox 等。
+2.给 View 注册 OnTouchListener 不会影响 View 的可点击状态。即使给 View 注册 OnTouchListener ，只要不返回 true 就不会消费事件。
+3. ViewGroup 和 ChildView 同时注册了事件监听器(onClick等)，哪个会执行?
+事件优先给 ChildView，会被 ChildView消费掉，ViewGroup 不会响应。
+4. 所有事件都应该被同一 View 消费
+在上面的例子中我们分析后可以了解到，同一次点击事件只能被一个 View 消费，如果再一次完整的事件中分别将不同的事件分配给了不同的 View 容易造成事件响应混乱。
+
+View 中 onClick 事件需要同时接收到 ACTION_DOWN 和 ACTION_UP 才能触发，如果分配给了不同的 View，那么 onClick 将无法被正确触发。
+
+安卓为了保证所有的事件都是被一个 View 消费的，对第一次的事件( ACTION_DOWN )进行了特殊判断，View 只有消费了 ACTION_DOWN 事件，
+才能接收到后续的事件(可点击控件会默认消费所有事件)，并且会将后续所有事件传递过来，不会再传递给其他 View，除非上层 View 进行了拦截。
+如果上层 View 拦截了当前正在处理的事件，会收到一个 ACTION_CANCEL，表示当前事件已经结束，后续事件不会再传递过来。

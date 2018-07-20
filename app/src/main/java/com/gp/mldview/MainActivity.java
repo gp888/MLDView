@@ -4,16 +4,20 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gp.mldview.draggrid.DragGridActivity;
 import com.gp.mldview.guideview.GuideDemoActivity;
+import com.gp.mldview.loadingview.LeafLoadingActivity;
 import com.gp.mldview.pie.PieActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnLayoutChangeListener{
+
 
 
     View.OnClickListener listener = new View.OnClickListener() {
@@ -38,6 +42,12 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 case R.id.setPoly:
                     startActivity(new Intent(MainActivity.this, SetPolyToPolyActivity.class));
                     break;
+                case R.id.rotateAni:
+                    startActivity(new Intent(MainActivity.this, CameraRotateActivity.class));
+                    break;
+                case R.id.leafload:
+                    startActivity(new Intent(MainActivity.this, LeafLoadingActivity.class));
+                    break;
             }
         }
     };
@@ -53,6 +63,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         findViewById(R.id.search).setOnClickListener(listener);
         findViewById(R.id.mysearch).setOnClickListener(listener);
         findViewById(R.id.setPoly).setOnClickListener(listener);
+        findViewById(R.id.rotateAni).setOnClickListener(listener);
+        findViewById(R.id.leafload).setOnClickListener(listener);
 
 
 

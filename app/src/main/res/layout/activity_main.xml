@@ -40,4 +40,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="setPoly" />
+
+    <Button
+        android:id="@+id/rotateAni"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="rotateAni" />
+
+    <Button
+        android:id="@+id/leafload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="leafload" />
 </LinearLayout>
