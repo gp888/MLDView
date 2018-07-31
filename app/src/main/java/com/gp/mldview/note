@@ -8,8 +8,8 @@ View.getLocationOnScreen(int[] location)
 如果在Activity的OnCreate()事件输出那些参数，是全为0，要等UI控件都加载完了才能获取到这些。
 在onWindowFocusChanged(boolean hasFocus)中获取为好。
 
-getLocalVisibleRect ， 返回一个填充的Rect对象，  ？？ sdk上也没注释,根据经验应该是获取控件相对在父亲里的一个Rect对象，left，top取到的是0
-getGlobalVisibleRect ， 获取全局坐标系的一个视图区域， 返回一个填充的Rect对象。 但是！！！ left能准确的获取， bottom属性就获取不准确， 不知道杂搞的
+getLocalVisibleRect ， 返回一个填充的Rect对象，  获取控件相对在父亲里的一个Rect对象，left，top取到的是0
+getGlobalVisibleRect ， 获取全局坐标系的一个视图区域， 返回一个填充的Rect对象。left能准确的获取， bottom属性就获取不准确
 
 
 两种获取view在屏幕上的位置。
