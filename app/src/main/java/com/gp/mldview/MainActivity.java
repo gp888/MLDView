@@ -4,12 +4,10 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.gp.mldview.draggrid.DragGridActivity;
 import com.gp.mldview.guideview.GuideDemoActivity;

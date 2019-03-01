@@ -9,8 +9,6 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
-import com.gp.mldview.pie.PieData;
-
 import java.util.List;
 
 /**
