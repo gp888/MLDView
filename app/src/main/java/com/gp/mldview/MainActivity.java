@@ -13,9 +13,9 @@ import com.gp.mldview.draggrid.DragGridActivity;
 import com.gp.mldview.guideview.GuideDemoActivity;
 import com.gp.mldview.loadingview.LeafLoadingActivity;
 import com.gp.mldview.pie.PieActivity;
+import com.gp.mldview.rxjava2.Rxjava2Activity;
 
 public class MainActivity extends AppCompatActivity implements View.OnLayoutChangeListener{
-
 
 
     View.OnClickListener listener = new View.OnClickListener() {
@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                     break;
                 case R.id.leafload:
                     startActivity(new Intent(MainActivity.this, LeafLoadingActivity.class));
+                case R.id.rxjava2:
+                    startActivity(new Intent(MainActivity.this, Rxjava2Activity.class));
                     break;
             }
         }
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         findViewById(R.id.setPoly).setOnClickListener(listener);
         findViewById(R.id.rotateAni).setOnClickListener(listener);
         findViewById(R.id.leafload).setOnClickListener(listener);
+        findViewById(R.id.rxjava2).setOnClickListener(listener);
 
 
 
