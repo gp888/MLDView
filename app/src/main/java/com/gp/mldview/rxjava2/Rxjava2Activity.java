@@ -6,6 +6,9 @@ import android.util.Log;
 
 import com.gp.mldview.BuildConfig;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -38,10 +41,23 @@ public class Rxjava2Activity extends AppCompatActivity {
                 Log.d(TAG, "observable thread is :" + Thread.currentThread().getName());
                 Log.d(TAG, "emitter");
                 e.onNext(1);
-//                e.onNext(2);
-//                e.onNext(3);
+                e.onNext(2);
+                e.onNext(3);
+                e.onComplete();
             }
         });
+
+        Observable observable1 = Observable.just("a", "b", "c");
+        // 将会依次调用：
+        // onNext("A");
+        // onNext("B");
+        // onNext("C");
+        // onCompleted();
+
+        String[] words = {"a", "b", "c"};
+        Observable observable2 = Observable.fromArray(words);
+
+//-------------------------------------------
 
         Observer<Integer> observer = new Observer<Integer>() {
             private Disposable disposable;
@@ -68,7 +84,6 @@ public class Rxjava2Activity extends AppCompatActivity {
 
             }
         };
-//        observable.subscribe(observer);
 
         Consumer<Integer> consumer = new Consumer<Integer>() {
             @Override
@@ -78,7 +93,76 @@ public class Rxjava2Activity extends AppCompatActivity {
             }
         };
 
-//        observable.subscribe(consumer);
+        //Subscriber类 = RxJava 内置的一个实现了 Observer 的抽象类，对 Observer 接口进行了扩展
+        Subscriber<Integer> subscriber = new Subscriber<Integer>() {
+
+            // 2. 创建对象时通过对应复写对应事件方法 从而 响应对应事件
+            // 观察者接收事件前，默认最先调用复写 onSubscribe（）
+            @Override
+            public void onSubscribe(Subscription s) {
+                Log.d(TAG, "开始采用subscribe连接");
+            }
+
+            // 当被观察者生产Next事件 & 观察者接收到时，会调用该复写方法 进行响应
+            @Override
+            public void onNext(Integer value) {
+                Log.d(TAG, "对Next事件作出响应" + value);
+            }
+
+            // 当被观察者生产Error事件& 观察者接收到时，会调用该复写方法 进行响应
+            @Override
+            public void onError(Throwable e) {
+                Log.d(TAG, "对Error事件作出响应");
+            }
+
+            // 当被观察者生产Complete事件& 观察者接收到时，会调用该复写方法 进行响应
+            @Override
+            public void onComplete() {
+                Log.d(TAG, "对Complete事件作出响应");
+            }
+        };
+
+        observable.subscribe(observer);
+        observable.subscribe(consumer);
+        observable.subscribe((Observer<? super Integer>) subscriber);
+
+        Observable.create(new ObservableOnSubscribe<Integer>() {
+            // 1. 创建被观察者 & 生产事件
+            @Override
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                emitter.onNext(1);
+                emitter.onNext(2);
+                emitter.onNext(3);
+                emitter.onComplete();
+            }
+        }).subscribe(new Observer<Integer>() {
+            // 2. 通过通过订阅（subscribe）连接观察者和被观察者
+            // 3. 创建观察者 & 定义响应事件的行为
+            @Override
+            public void onSubscribe(Disposable d) {
+                Log.d(TAG, "开始采用subscribe连接");
+            }
+            // 默认最先调用复写的 onSubscribe（）
+
+            @Override
+            public void onNext(Integer value) {
+                Log.d(TAG, "对Next事件"+ value +"作出响应"  );
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.d(TAG, "对Error事件作出响应");
+            }
+
+            @Override
+            public void onComplete() {
+                Log.d(TAG, "对Complete事件作出响应");
+            }
+
+        });
+
+        //整体方法调用顺序：观察者.onSubscribe（）> 被观察者.subscribe（）> 观察者.onNext（）>观察者.onComplete()
+
 
 //        observable.subscribeOn(Schedulers.newThread())
 //                .subscribeOn(Schedulers.io())
@@ -119,5 +203,6 @@ public class Rxjava2Activity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
+
     }
 }
