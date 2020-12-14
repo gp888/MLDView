@@ -9,11 +9,13 @@ import com.gp.mldview.BuildConfig;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -28,6 +30,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class Rxjava2Activity extends AppCompatActivity {
 
     String TAG = Rxjava2Activity.class.getSimpleName();
+    Integer i = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,6 +165,105 @@ public class Rxjava2Activity extends AppCompatActivity {
         });
 
         //整体方法调用顺序：观察者.onSubscribe（）> 被观察者.subscribe（）> 观察者.onNext（）>观察者.onComplete()
+
+
+        //defer()
+//      1. 第1次对i赋值
+        i = 10;
+
+        // 2. 通过defer 定义被观察者对象
+        // 注：此时被观察者对象还没创建
+        Observable<Integer> observable3 = Observable.defer(new Callable<ObservableSource<? extends Integer>>() {
+            @Override
+            public ObservableSource<? extends Integer> call() throws Exception {
+                return Observable.just(i);
+            }
+        });
+
+//        2. 第2次对i赋值
+        i = 15;
+
+//        3. 观察者开始订阅
+                // 注：此时，才会调用defer（）创建被观察者对象（Observable）
+                observable3.subscribe(new Observer<Integer>() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.d(TAG, "开始采用subscribe连接");
+                    }
+
+                    @Override
+                    public void onNext(Integer value) {
+                        Log.d(TAG, "接收到的整数是"+ value  );
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "对Error事件作出响应");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "对Complete事件作出响应");
+                    }
+                });
+
+                //timer()
+        //延迟指定时间后，调用一次 onNext(0)
+        // 该例子 = 延迟2s后，发送一个long类型数值
+        Observable.timer(2, TimeUnit.SECONDS)
+                .subscribe(new Observer<Long>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.d(TAG, "开始采用subscribe连接");
+                    }
+
+                    @Override
+                    public void onNext(Long value) {
+                        Log.d(TAG, "接收到了事件"+ value  );
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "对Error事件作出响应");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "对Complete事件作出响应");
+                    }
+
+                });
+        //inverval()
+//发送的事件序列 = 从0开始、无限递增1的的整数序列
+        // 参数1 = 第1次延迟时间；
+        // 参数2 = 间隔时间数字；
+        // 参数3 = 时间单位；
+        Observable.interval(3,1,TimeUnit.SECONDS)
+                // 该例子发送的事件序列特点：延迟3s后发送事件，每隔1秒产生1个数字（从0开始递增1，无限个）
+                .subscribe(new Observer<Long>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.d(TAG, "开始采用subscribe连接");
+                    }
+                    // 默认最先调用复写的 onSubscribe（）
+
+                    @Override
+                    public void onNext(Long value) {
+                        Log.d(TAG, "接收到了事件"+ value  );
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "对Error事件作出响应");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "对Complete事件作出响应");
+                    }
+
+                });
 
 
 //        observable.subscribeOn(Schedulers.newThread())
