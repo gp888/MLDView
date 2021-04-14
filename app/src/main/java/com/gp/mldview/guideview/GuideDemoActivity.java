@@ -12,7 +12,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.gp.mldview.R;
-import com.gp.mldview.guideview.GuideView;
 
 public class GuideDemoActivity extends AppCompatActivity {
 
