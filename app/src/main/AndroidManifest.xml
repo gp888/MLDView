@@ -3,6 +3,7 @@
     package="com.gp.mldview">
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -33,6 +34,7 @@
         <activity android:name=".SetPolyToPolyActivity"/>
         <activity android:name=".CameraRotateActivity"/>
         <activity android:name=".rxjava2.Rxjava2Activity"/>
+        <activity android:name=".dagger.HomeActivity"/>
     </application>
 
 </manifest>
