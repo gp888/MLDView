@@ -1,6 +1,9 @@
 package com.gp.mldview;
 
 
+import android.content.res.Configuration;
+import android.util.Log;
+
 import com.gp.mldview.dagger.di.DaggerAppComponent;
 
 import dagger.android.AndroidInjector;
@@ -16,6 +19,8 @@ public class App extends DaggerApplication {
     public void onCreate() {
         super.onCreate();
         app = this;
+        //初始化语言设置
+        LocaleUtil.changeAppLanguage(this);
     }
 
     @Override
@@ -25,6 +30,14 @@ public class App extends DaggerApplication {
 
     public static App getApp() {
         return app;
+    }
+
+    //当系统设置语言变化时进行语言设置
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Log.e("TAG", "onConfigurationChanged");
+        LocaleUtil.setLanguage(this, newConfig);
     }
 
 }
