@@ -1,6 +1,6 @@
 package com.gp.mldview.pie;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Created by guoping on 2018/4/2.

@@ -1,10 +1,9 @@
 package com.gp.mldview.dagger.base;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import butterknife.ButterKnife;
-import dagger.android.AndroidInjection;
 import dagger.android.DaggerActivity;
 
 

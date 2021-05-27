@@ -5,8 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
+import androidx.annotation.Nullable;
+
 import android.view.View;
 
 public class SetPolyToPolyView extends View {
