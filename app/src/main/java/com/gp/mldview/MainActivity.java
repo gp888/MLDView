@@ -46,7 +46,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 case R.id.leafload:
                     startActivity(new Intent(MainActivity.this, LeafLoadingActivity.class));
                 case R.id.rxjava2:
-                    startActivity(new Intent(MainActivity.this, Rxjava2Activity.class));
+//                    startActivity(new Intent(MainActivity.this, Rxjava2Activity.class));
+                    startActivity(new Intent(MainActivity.this, SpannableActivity.class));
                     break;
             }
         }

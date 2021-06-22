@@ -37,6 +37,7 @@
         <activity android:name=".CameraRotateActivity"/>
         <activity android:name=".rxjava2.Rxjava2Activity"/>
         <activity android:name=".dagger.HomeActivity"/>
+        <activity android:name=".SpannableActivity"/>
     </application>
 
 </manifest>

@@ -9,5 +9,6 @@
     <color name="Red_800">#ffb93221</color>
     <color name="white">#fff</color>
     <color name="blue">#0082D7</color>
+    <color name="Red800">@color/Red_800</color>
 
 </resources>

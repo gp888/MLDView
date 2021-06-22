@@ -64,4 +64,6 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
 
     implementation 'org.greenrobot:eventbus:3.0.0'
+    implementation 'com.blankj:utilcodex:1.30.5'
+
 }
