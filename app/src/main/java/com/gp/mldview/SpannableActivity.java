@@ -8,8 +8,10 @@ import android.graphics.LinearGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.Layout;
 import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
@@ -108,5 +110,15 @@ public class SpannableActivity extends AppCompatActivity {
                 .appendLine()
                 .append("测试空格").appendSpace(30, Color.LTGRAY).appendSpace(50, Color.GREEN).appendSpace(100).appendSpace(30, Color.LTGRAY).appendSpace(50, Color.GREEN)
                 .create());
+
+
+        TextView tv = findViewById(R.id.action);
+//        https://t.me/share/url?url={url}&text={text}
+//        https://telegram.me/share/url?url={url}&text={text}
+//        tg://msg_url?url={url}&text={text}
+
+        tv.setText(Html.fromHtml("<a href='tg://msg_url?url=https://baidu.com&text=123456'>CLICK THIS NODATA</a>"));
+        //激活链接
+        tv.setMovementMethod(LinkMovementMethod.getInstance());
     }
 }

@@ -10,10 +10,10 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.gp.mldview.draggrid.DragGridActivity;
+import com.gp.mldview.ether.Web3jActivity;
 import com.gp.mldview.guideview.GuideDemoActivity;
 import com.gp.mldview.loadingview.LeafLoadingActivity;
 import com.gp.mldview.pie.PieActivity;
-import com.gp.mldview.rxjava2.Rxjava2Activity;
 
 public class MainActivity extends AppCompatActivity implements View.OnLayoutChangeListener{
 
@@ -47,7 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                     startActivity(new Intent(MainActivity.this, LeafLoadingActivity.class));
                 case R.id.rxjava2:
 //                    startActivity(new Intent(MainActivity.this, Rxjava2Activity.class));
-                    startActivity(new Intent(MainActivity.this, SpannableActivity.class));
+//                    startActivity(new Intent(MainActivity.this, SpannableActivity.class));
+                    startActivity(new Intent(MainActivity.this, Web3jActivity.class));
                     break;
             }
         }

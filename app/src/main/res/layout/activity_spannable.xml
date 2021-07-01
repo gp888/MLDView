@@ -56,6 +56,11 @@
                 android:layout_gravity="center_vertical|right"
                 android:text="background"/>
         </FrameLayout>
+
+        <TextView
+            android:id="@+id/action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

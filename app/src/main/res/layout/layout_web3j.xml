@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/create_Account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="create_Account" />
+
+    <Button
+        android:id="@+id/account_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="account_list" />
+
+    <Button
+        android:id="@+id/unlock_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="unlock_account" />
+
+    <TextView
+        android:id="@+id/tv_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <TextView
+        android:id="@+id/tv_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

@@ -1,8 +1,11 @@
 package com.gp.mldview;
 
 
+import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
+
+import androidx.multidex.MultiDex;
 
 import com.gp.mldview.dagger.di.DaggerAppComponent;
 
@@ -14,6 +17,12 @@ import dagger.android.DaggerApplication;
 public class App extends DaggerApplication {
 
     private static App app;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
 
     @Override
     public void onCreate() {
