@@ -8,8 +8,10 @@ import org.web3j.protocol.http.HttpService;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.URL;
 
+/**
+ * 公钥私钥相关接口
+ */
 public class Security {
 	private static Web3j web3j;
 

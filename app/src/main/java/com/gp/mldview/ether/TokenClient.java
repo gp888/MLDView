@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * 基于ERC20的代币
+ * token代币相关查询及转账
  */
 public class TokenClient {
 

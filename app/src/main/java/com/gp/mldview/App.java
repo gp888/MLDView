@@ -16,7 +16,7 @@ import dagger.android.DaggerApplication;
 // 编译下工程，返回Dagger2自动生成的Component类的create方法
 public class App extends DaggerApplication {
 
-    private static App app;
+    public static App app;
 
     @Override
     protected void attachBaseContext(Context base) {

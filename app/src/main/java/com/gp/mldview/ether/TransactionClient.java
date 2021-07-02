@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+/**
+ * eth转账相关接口
+ */
 public class TransactionClient {
 	private static Web3j web3j;
 	private static Admin admin;
@@ -25,6 +28,8 @@ public class TransactionClient {
 	private static String fromAddress = "0x7b1cc408fcb2de1d510c1bf46a329e9027db4112";
 	private static String toAddress = "0x05f50cd5a97d9b3fec35df3d0c6c8234e6793bdf";
 	private static BigDecimal defaultGasPrice = BigDecimal.valueOf(5);
+	///支付的矿工费
+//	BigInteger gasPrice = web3j.ethGasPrice().send().getGasPrice();
 
 	public static void main(String[] args) {
 		web3j = Web3j.build(new HttpService(Environment.RPC_URL));
@@ -141,4 +146,5 @@ public class TransactionClient {
 	}
 
 	//使用 web3j.ethSendRawTransaction() 发送交易 需要用私钥自签名交易 详见ColdWallet.java
+	//eth_sendTransaction 这种 就直接发送交易到区块链，eth_sendRawTransaction  自己事先签名好 生成hex   用这个方法广播的
 }

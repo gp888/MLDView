@@ -9,6 +9,9 @@ import org.web3j.protocol.http.HttpService;
 import java.io.IOException;
 import java.math.BigInteger;
 
+/**
+ * 连接节点的相关信息接口
+ */
 public class EthInfo {
 	private static Web3j web3j;
 

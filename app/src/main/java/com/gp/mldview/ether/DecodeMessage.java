@@ -11,6 +11,9 @@ import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.List;
 
+/**
+ * 加密后的交易数据解析
+ */
 public class DecodeMessage {
 
 	/**

@@ -10,16 +10,25 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.gp.mldview.R;
+import com.gp.mldview.ether.utils.TianWallet;
+import com.gp.mldview.ether.utils.Web3Utils;
 
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.admin.Admin;
 import org.web3j.protocol.admin.methods.response.NewAccountIdentifier;
 import org.web3j.protocol.admin.methods.response.PersonalListAccounts;
 import org.web3j.protocol.admin.methods.response.PersonalUnlockAccount;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.Transfer;
+import org.web3j.utils.Convert;
 
+import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -53,6 +62,33 @@ public class Web3jActivity extends AppCompatActivity implements View.OnClickList
         findViewById(R.id.unlock_account).setOnClickListener(this);
 
         initWeb3j();
+
+        String words = Web3Utils.INSTANCE.makeMnemonic();
+        Log.d("Web3jActivity===", words);
+        TianWallet wallet = Web3Utils.INSTANCE.createETHWalletFromWords(words);
+        Log.d("Web3jActivity===", wallet.toString());
+
+//        web3 = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/YOURKEY"));
+//        Web3ClientVersion clientVersion = web3.web3ClientVersion().sendAsync().get();
+//        if(!clientVersion.hasError()){
+//            //Connected
+//        }
+//        else {
+//            //Show Error
+//        }
+
+        //创建钱包
+//        WalletUtils.generateNewWalletFile(password, new File(""));
+
+        //获取地址
+//        Credentials credentials = WalletUtils.loadCredentials(password, walletDir);
+//        Toast.makeText(this, "Your address is " + credentials.getAddress(), Toast.LENGTH_LONG).show();
+
+        //发送交易
+//        Credentials credentials = WalletUtils.loadCredentials(password, walletDir);
+//        TransactionReceipt receipt = Transfer.sendFunds(web3,credentials,"0x31B98D14007bDEe637298086988A0bBd31184523",
+//                new BigDecimal(1), Convert.Unit.ETHER).sendAsync().get();
+//        Toast.makeText(this, "Transaction complete: " +receipt.getTransactionHash(), Toast.LENGTH_LONG).show();
     }
 
     private void initWeb3j() {

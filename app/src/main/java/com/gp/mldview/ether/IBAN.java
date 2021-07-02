@@ -1,13 +1,14 @@
 package com.gp.mldview.ether;
 
 import java.math.BigInteger;
-import java.text.Format;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 
 import static java.lang.Integer.parseInt;
 
+/**
+ * 根据官方规则生成iban及付款二维码
+ *
+ * 国际银行账户号码，适用于欧洲
+ */
 public class IBAN {
 
 	/**

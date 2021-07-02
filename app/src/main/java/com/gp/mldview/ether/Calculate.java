@@ -8,6 +8,9 @@ import org.web3j.utils.Numeric;
 
 import java.util.Arrays;
 
+/**
+ * 在发布合约前计算合约地址，根据签名后的交易信息计算TxHash
+ */
 public class Calculate {
 	public static void main(String[] args) {
 		System.out.println(calculateContractAddress("0x6c0f49aF552F2326DD851b68832730CB7b6C0DaF".toLowerCase(), 294));
