@@ -1,7 +1,10 @@
 package com.gp.mldview.ether;
 
+import android.util.Log;
+
 import com.gp.mldview.ether.utils.Environment;
 
+import org.reactivestreams.Subscriber;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.admin.Admin;
 import org.web3j.protocol.admin.methods.response.PersonalUnlockAccount;
@@ -54,6 +57,7 @@ public class TransactionClient {
 			e.printStackTrace();
 		}
 		System.out.println("address " + address + " balance " + balance + "wei");
+		Convert.fromWei(balance.toString(), Convert.Unit.ETHER);
 		return balance;
 	}
 
@@ -147,4 +151,18 @@ public class TransactionClient {
 
 	//使用 web3j.ethSendRawTransaction() 发送交易 需要用私钥自签名交易 详见ColdWallet.java
 	//eth_sendTransaction 这种 就直接发送交易到区块链，eth_sendRawTransaction  自己事先签名好 生成hex   用这个方法广播的
+
+
+	/**
+	 * 获取交易详情
+	 * @param getTransactionHash
+	 */
+	public void getTransactionInfo(String getTransactionHash){
+		try {
+			org.web3j.protocol.core.methods.response.Transaction transactionResult =  web3j.ethGetTransactionByHash(getTransactionHash).send().getResult();
+			Log.e("+++","交易详情："+transactionResult.getFrom());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }

@@ -86,5 +86,7 @@ dependencies {
 //    implementation 'com.lhalcyon:bip32:1.0.0'
 
     implementation 'org.bitcoinj:bitcoinj-core:0.14.7'
+    implementation 'com.google.zxing:core:3.3.3'
+
 
 }

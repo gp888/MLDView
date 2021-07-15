@@ -132,6 +132,7 @@ public class ColdWallet {
 
 	/**
 	 * 创建钱包
+	 * 非确定性钱包
 	 *
 	 * @param password 密码
 	 */

@@ -1,0 +1,448 @@
+Solidity中， uint 实际上是 uint256代名词， 一个256位的无符号整数。
+你也可以定义位数少的uints — uint8， uint16， uint32，
+
+结构体:
+
+struct Person {
+  uint age;
+  string name;
+}
+
+string。 字符串用于保存任意长度的 UTF-8 编码数据
+
+ Solidity 支持两种数组: _静态_ 数组和_动态_ 数组:
+
+// 固定长度为2的静态数组:
+uint[2] fixedArray;
+// 固定长度为5的string类型的静态数组:
+string[5] stringArray;
+// 动态数组，长度不固定，可以动态添加元素:
+uint[] dynamicArray;
+
+ 结构体类型的数组
+Person[] people;
+
+状态变量被永久保存在区块链中。
+所以在你的合约中创建动态数组来保存成结构的数据是非常有意义的
+
+
+习惯上函数里的变量都是以(_)开头 (但不是硬性规定) 以区别全局变量
+
+array.push() 在数组的 尾部 加入新元素 ，所以元素在数组中的顺序就是我们添加的顺序
+
+Solidity 定义的函数的属性默认为公共。 这就意味着任何一方 (或其它合约) 都可以调用你合约里的函数。
+
+私有的函数呢
+uint[] numbers;
+function _addToArray(uint _number) private {
+  numbers.push(_number);
+}
+只有我们合约中的其它函数才能够调用这个函数，给 numbers 数组添加新成员。
+私有函数的名字用(_)起始
+
+
+返回值
+string greeting = "What's up dog";
+
+function sayHello() public returns (string) {
+  return greeting;
+}
+函数的修饰符
+上面的函数实际上没有改变 Solidity 里的状态，即，它没有改变任何值或者写任何东西。
+
+这种情况下我们可以把函数定义为 view, 意味着它只能读取数据不能更改数据:
+
+function sayHello() public view returns (string) {
+
+Solidity 还支持 pure 函数, 表明这个函数甚至都不访问应用里的数据，例如：
+
+function _multiply(uint a, uint b) private pure returns (uint) {
+  return a * b;
+}
+这个函数甚至都不读取应用里的状态 — 它的返回值完全取决于它的输入参数，在这种情况下我们把函数定义为 pure.
+
+
+类型转换
+uint8 a = 5;
+uint b = 6;
+// 将会抛出错误，因为 a * b 返回 uint, 而不是 uint8:
+uint8 c = a * b;
+// 我们需要将 b 转换为 uint8:
+uint8 c = a * uint8(b);
+
+
+事件 是合约和区块链通讯的一种机制。你的前端应用“监听”某些事件，并做出反应。
+
+例子:
+
+// 这里建立事件
+event IntegersAdded(uint x, uint y, uint result);
+
+function add(uint _x, uint _y) public {
+  uint result = _x + _y;
+  //触发事件，通知app
+  IntegersAdded(_x, _y, result);
+  return result;
+}
+你的 app 前端可以监听这个事件。JavaScript 实现如下:
+
+YourContract.IntegersAdded(function(error, result) {
+  // 干些事
+})
+
+
+//对于金融应用程序，将用户的余额保存在一个 uint类型的变量中：
+mapping (address => uint) public accountBalance;
+//或者可以用来通过userId 存储/查找的用户名
+mapping (uint => string) userIdToName;
+
+
+全局变量可以被所有函数调用。 其中一个就是 msg.sender，它指的是当前调用者（或智能合约）的 address
+require使得函数在执行过程中，当不满足某些条件时抛出错误，并停止执行
+
+Solidity 并不支持原生的字符串比较, 我们只能通过比较两字符串的 keccak256 哈希值来进行判断
+
+合约继承：inheritance
+
+Storage 变量是指永久存储在区块链中的变量。 Memory 变量则是临时的，当外部函数对某合约调用完成时，内存型变量即被移除
+
+状态变量（在函数之外声明的变量）默认为“存储”形式，并永久写入区块链；而在函数内部声明的变量是“内存”型的，它们函数调用结束后消失。
+
+contract SandwichFactory {
+  struct Sandwich {
+    string name;
+    string status;
+  }
+
+  Sandwich[] sandwiches;
+
+  function eatSandwich(uint _index) public {
+    // Sandwich mySandwich = sandwiches[_index];
+
+    // ^ 看上去很直接，不过 Solidity 将会给出警告
+    // 告诉你应该明确在这里定义 `storage` 或者 `memory`。
+
+    // 所以你应该明确定义 `storage`:
+    Sandwich storage mySandwich = sandwiches[_index];
+    // ...这样 `mySandwich` 是指向 `sandwiches[_index]`的指针
+    // 在存储里，另外...
+    mySandwich.status = "Eaten!";
+    // ...这将永久把 `sandwiches[_index]` 变为区块链上的存储
+
+    // 如果你只想要一个副本，可以使用`memory`:
+    Sandwich memory anotherSandwich = sandwiches[_index + 1];
+    // ...这样 `anotherSandwich` 就仅仅是一个内存里的副本了
+    // 另外
+    anotherSandwich.status = "Eaten!";
+    // ...将仅仅修改临时变量，对 `sandwiches[_index + 1]` 没有任何影响
+    // 不过你可以这样做:
+    sandwiches[_index + 1] = anotherSandwich;
+    // ...如果你想把副本的改动保存回区块链存储
+  }
+}
+
+
+ private （私有）函数。意味着任何继承自 它 的子合约都不能访问它
+ internal（内部） 和 external（外部）。
+internal 和 private 类似，不过， 如果某个合约继承自其父合约，可以访问父合约中定义的“内部”函数
+external 与public 类似，只不过这些函数只能在合约之外调用 - 它们不能被合约内的其他函数调用
+
+与其他合约的交互
+
+contract LuckyNumber {
+  mapping(address => uint) numbers;
+
+  function setNum(uint _num) public {
+    numbers[msg.sender] = _num;
+  }
+
+  function getNum(address _myAddress) public view returns (uint) {
+    return numbers[_myAddress];
+  }
+}
+有一个外部合约，使用 getNum 函数可读取其中的数据。
+
+首先，我们定义 LuckyNumber 合约的 interface ：
+
+contract NumberInterface {
+  function getNum(address _myAddress) public view returns (uint);
+}
+
+只声明了要与之交互的函数 —— 在本例中为 getNum —— 在其中我们没有使用到任何其他的函数或状态变量。
+
+其次，我们并没有使用大括号（{ 和 }）定义函数体，我们单单用分号（;）结束了函数声明。这使它看起来像一个合约框架。
+
+编译器就是靠这些特征认出它是一个接口的
+
+contract MyContract {
+  address NumberInterfaceAddress = 0xab38...;
+  // ^ 这是FavoriteNumber合约在以太坊上的地址
+  NumberInterface numberContract = NumberInterface(NumberInterfaceAddress);
+  // 现在变量 `numberContract` 指向另一个合约对象
+
+  function someFunction() public {
+    // 现在我们可以调用在那个合约中声明的 `getNum`函数:
+    uint num = numberContract.getNum(msg.sender);
+    // ...在这儿使用 `num`变量做些什么
+  }
+}
+
+处理多返回值
+function multipleReturns() internal returns(uint a, uint b, uint c) {
+  return (1, 2, 3);
+}
+
+function processMultipleReturns() external {
+  uint a;
+  uint b;
+  uint c;
+  // 这样来做批量赋值:
+  (a, b, c) = multipleReturns();
+}
+
+// 或者如果我们只想返回其中一个变量:
+function getLastReturnValue() external {
+  uint c;
+  // 可以对其他字段留空:
+  (,,c) = multipleReturns();
+}
+
+
+function Ownable()是一个 _ constructor_ (构造函数)，构造函数不是必须的，它与合约同名，构造函数一生中唯一的一次执行，就是在合约最初被创建的时候。
+
+函数修饰符：modifier onlyOwner()。 修饰符跟函数很类似，不过是用来修饰其他已有函数用的， 在其他语句执行前，为它检查下先验条件
+
+
+省 gas 的招数：结构封装 （Struct packing）
+
+
+
+uint：uint8，uint16，uint32
+无论如何定义 uint的大小，Solidity 为它保留256位的存储空间。例如，使用 uint8 而不是uint（uint256）不会为你节省任何 gas
+除非，把 uint 绑定到 struct 里面。
+
+如果一个 struct 中有多个 uint，则尽可能使用较小的 uint, Solidity 会将这些 uint 打包在一起，从而占用较少的存储空间
+```
+struct NormalStruct {
+  uint a;
+  uint b;
+  uint c;
+}
+
+struct MiniMe {
+  uint32 a;
+  uint32 b;
+  uint c;
+}
+
+// 因为使用了结构打包，`mini` 比 `normal` 占用的空间更少
+NormalStruct normal = NormalStruct(10, 20, 30);
+MiniMe mini = MiniMe(10, 20, 30);
+```
+当 uint 定义在一个 struct 中的时候，尽量使用最小的整数子类型以节约空间。 并且把同样类型的变量放一起（即在 struct 中将把变量按照类型依次放置），这样 Solidity 可以将存储空间最小化。例如，有两个 struct：
+uint c; uint32 a; uint32 b; 和 uint32 a; uint c; uint32 b;
+前者比后者需要的gas更少，因为前者把uint32放一起了
+
+变量 now 将返回当前的unix时间戳（自1970年1月1日以来经过的秒数）
+Solidity 还包含秒(seconds)，分钟(minutes)，小时(hours)，天(days)，周(weeks) 和 年(years) 等时间单位
+
+```
+uint lastUpdated;
+
+// 将‘上次更新时间’ 设置为 ‘现在’
+function updateTimestamp() public {
+  lastUpdated = now;
+}
+
+// 如果到上次`updateTimestamp` 超过5分钟，返回 'true'
+// 不到5分钟返回 'false'
+function fiveMinutesHavePassed() public view returns (bool) {
+  return (now >= (lastUpdated + 5 minutes));
+}
+```
+
+使用 uint32（...） 进行强制类型转换，因为 now 返回类型 uint256。所以我们需要明确将它转换成一个 uint32 类型的变量。
+
+
+将结构体作为参数传入
+由于结构体的存储指针可以以参数的方式传递给一个 private 或 internal 的函数，因此结构体可以在多个函数之间相互传递。
+
+function _doStuff(Zombie storage _zombie) internal {
+  // do stuff with _zombie
+}
+
+带参数的函数修饰符
+
+// 存储用户年龄的映射
+mapping (uint => uint) public age;
+
+// 限定用户年龄的修饰符
+modifier olderThan(uint _age, uint _userId) {
+  require(age[_userId] >= _age);
+  _;
+}
+
+// 必须年满16周岁才允许开车 (至少在美国是这样的).
+// 我们可以用如下参数调用`olderThan` 修饰符:
+function driveCar(uint _userId) public olderThan(16, _userId) {
+  // 其余的程序逻辑
+}
+
+
+从外部调用一个view函数，是不需要支付一分 gas 的。
+这是因为 view 函数不会真正改变区块链上的任何数据 - 它们只是读取。
+因此用 view 标记一个函数，意味着告诉 web3.js，运行这个函数只需要查询你的本地以太坊节点，
+而不需要在区块链上创建一个事务（事务需要运行在每个节点上，因此花费 gas）。
+
+只读的函数上,标记上表示“只读”的“external view 声明，就能为你的玩家减少在 DApp 中 gas 用量
+
+如果一个 view 函数在另一个函数的内部被调用，而调用函数与 view 函数的不属于同一个合约，也会产生调用成本。这是因为如果主调函数在以太坊创建了一个事务，
+它仍然需要逐个节点去验证。所以标记为 view 的函数只有在外部调用时才是免费的
+
+
+在内存中声明数组
+在数组后面加上 memory关键字， 表明这个数组是仅仅在内存中创建，不需要写入外部存储，并且在函数调用结束时它就解散了。
+与在程序结束时把数据保存进 storage 的做法相比，内存运算可以大大节省gas开销 -- 把这数组放在view里用，完全不用花钱
+
+function getArray() external pure returns(uint[]) {
+  // 初始化一个长度为3的内存数组
+  uint[] memory values = new uint[](3);
+  // 赋值
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  // 返回数组
+  return values;
+}
+
+内存数组 必须 用长度参数创建。目前不支持 array.push()之类的方法调整数组大小
+
+for循环
+function getEvens() pure external returns(uint[]) {
+  uint[] memory evens = new uint[](5);
+  // 在新数组中记录序列号
+  uint counter = 0;
+  // 在循环从1迭代到10：
+  for (uint i = 1; i <= 10; i++) {
+    // 如果 `i` 是偶数...
+    if (i % 2 == 0) {
+      // 把它加入偶数数组
+      evens[counter] = i;
+      //索引加一， 指向下一个空的‘even’
+      counter++;
+    }
+  }
+  return evens;
+}
+
+ view 告诉我们运行这个函数不会更改和保存任何数据；
+ pure 告诉我们这个函数不但不会往区块链写数据，它甚至不从区块链读取数据。
+ 这两种在被从合约外部调用的时候都不花费任何gas（但是它们在被内部其他函数调用的时候将会耗费gas）。
+
+
+函数修饰符可同时作用于一个函数
+ function test() external view onlyOwner anotherModifier { /* ... */ }
+
+ payable 修饰符
+ 可以接收以太的特殊函数
+
+ contract OnlineStore {
+   function buySomething() external payable {
+     // 检查以确定0.001以太发送出去来运行函数:
+     require(msg.value == 0.001 ether);
+     // 如果为真，一些用来向函数调用者发送数字内容的逻辑
+     transferThing(msg.sender);
+   }
+ }
+ msg.value 是一种可以查看向合约发送了多少以太的方法
+
+ // 假设 `OnlineStore` 在以太坊上指向你的合约:
+ OnlineStore.buySomething().send(from: web3.eth.defaultAccount, value: web3.utils.toWei(0.001))
+
+ 如果一个函数没标记为payable， 而你尝试利用上面的方法发送以太，函数将拒绝你的事务。
+
+
+从合约中提现
+ contract GetPaid is Ownable {
+   function withdraw() external onlyOwner {
+     owner.transfer(this.balance);
+   }
+ }
+ 通过 transfer 函数向一个地址发送以太
+
+  msg.sender 超额付款的时候给他们退钱：
+
+ uint itemFee = 0.001 ether;
+ msg.sender.transfer(msg.value - itemFee);
+
+ 在一个有卖家和卖家的合约中， 你可以把卖家的地址存储起来，
+ 当有人买了它的东西的时候，把买家支付的钱发送给它 seller.transfer(msg.value)。
+
+
+
+ 用 keccak256 来制造随机数
+ // 生成一个0到100的随机数:
+ uint randNonce = 0;
+ uint random = uint(keccak256(now, msg.sender, randNonce)) % 100;
+ randNonce++;
+ uint random2 = uint(keccak256(now, msg.sender, randNonce)) % 100;
+
+
+erc20代币
+ 实现了所有其他代币合约共享的一组标准函数，例如 transfer(address _to, uint256 _value) 和 balanceOf(address _owner).
+ 在智能合约内部，通常有一个映射， mapping(address => uint256) balances
+
+
+ contract ERC721 {
+   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+
+   function balanceOf(address _owner) public view returns (uint256 _balance);
+   function ownerOf(uint256 _tokenId) public view returns (address _owner);
+   function transfer(address _to, uint256 _tokenId) public;
+   function approve(address _to, uint256 _tokenId) public;
+   function takeOwnership(uint256 _tokenId) public;
+ }
+
+
+
+ ERC721 规范有两种不同的方法来转移代币：
+
+ function transfer(address _to, uint256 _tokenId) public;
+
+ function approve(address _to, uint256 _tokenId) public;
+ function takeOwnership(uint256 _tokenId) public;
+ 第一种方法是代币的拥有者调用transfer 方法，传入他想转移到的 address 和他想转移的代币的 _tokenId。
+
+ 第二种方法是代币拥有者首先调用 approve，然后传入与以上相同的参数。接着，该合约会存储谁被允许提取代币，
+ 通常存储到一个 mapping (uint256 => address) 里。然后，当有人调用 takeOwnership 时，
+ 合约会检查 msg.sender 是否得到拥有者的批准来提取代币，如果是，则将代币转移给他
+
+
+overflow溢出
+ underflow下溢
+
+ OpenZeppelin 建立了一个叫做 SafeMath 的 _库
+
+ 使用 SafeMath 库的时候，我们将使用 using SafeMath for uint256 这样的语法。 SafeMath 库有四个方法 — add， sub， mul， 以及 div
+
+ using SafeMath for uint256;
+
+
+
+库允许我们使用 using 关键字，它可以自动把库的所有方法添加给一个数据类型
+
+ using SafeMath for uint;
+ // 这下我们可以为任何 uint 调用这些方法了
+ uint test = 2;
+ test = test.mul(3); // test 等于 6 了
+ test = test.add(5); // test 等于 11 了
+
+ mul 和 add 其实都需要两个参数。 在我们声明了 using SafeMath for uint 后，
+ 我们用来调用这些方法的 uint 就自动被作为第一个参数传递进去了(在此例中就是 test)
+
+
+ assert 和 require 相似，若结果为否它就会抛出错误。 assert 和 require 区别在于，require 若失败则会返还给用户剩下的 gas，
+ assert 则不会。所以大部分情况下，你写代码的时候会比较喜欢 require，assert 只在代码可能出现严重错误的时候使用，比如 uint 溢出。
+
+ 所以简而言之， SafeMath 的 add， sub， mul， 和 div 方法只做简单的四则运算，然后在发生溢出或下溢的时候抛出错误

@@ -1,0 +1,50 @@
+pragma solidity ^0.4.19
+
+
+import "./zombieattack.sol";
+import "./erc721.sol";
+
+//erc721转移
+contract ZombieOwnership is ZombieBattle, ERC721{
+
+  //当有人用一个 _tokenId 调用 takeOwnership 时，我们可以用这个映射来快速查找谁被批准获取那个代币
+  mapping (uint => address) zombieApprovals;
+
+  function balanceOf(address _owner) public view returns (uint256 _balance) {
+    return ownerZombieCount[_owner];
+  }
+
+  function ownerOf(uint256 _tokenId) public view returns (address _owner) {
+    return zombieToOwner[_tokenId];
+  }
+
+   //私有转移
+  function _transfer(address _from, address _to, uint256 _tokenId) private {
+      //防止溢出
+      ownerZombieCount[_to] = ownerZombieCount[_to].add(1);
+      ownerZombieCount[_from] = ownerZombieCount[_from].sub(1);
+      zombieToOwner[_tokenId] = _to;
+      //ERC721规范函数
+      Transfer(_from, _to, _tokenId);
+  }
+
+
+  function transfer(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId) {
+      _transfer(msg.sender, _to, _tokenId);
+  }
+
+  //你，作为所有者，用新主人的 address 和你希望他获取的 _tokenId 来调用 approve
+  function approve(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId){
+    zombieApprovals[_tokenId] = _to;
+    //ERC721规范函数
+    Approval(msg.sender, _to, _tokenId);
+  }
+
+  //新主人用 _tokenId 来调用 takeOwnership，合约会检查确保他获得了批准，然后把代币转移给他
+  function takeOwnership(uint256 _tokenId) public {
+    require(zombieApprovals[_tokenId] == msg.sender);
+    address owner = ownerOf(_tokenId);
+    _transfer(owner, msg.sender, _tokenId);
+  }
+
+}
