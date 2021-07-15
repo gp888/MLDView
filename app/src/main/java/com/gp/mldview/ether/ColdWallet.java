@@ -59,7 +59,8 @@ public class ColdWallet {
 		}
 	}
 
-	private static void testTransaction() {
+	//ETH转账
+	private static void testTransaction() throws IOException {
 		BigInteger nonce;
 		EthGetTransactionCount ethGetTransactionCount = null;
 		try {
@@ -69,7 +70,8 @@ public class ColdWallet {
 		}
 		if (ethGetTransactionCount == null) return;
 		nonce = ethGetTransactionCount.getTransactionCount();
-		BigInteger gasPrice = Convert.toWei(BigDecimal.valueOf(3), Convert.Unit.GWEI).toBigInteger();
+		BigInteger gasPrice = web3j.ethGasPrice().send().getGasPrice();
+//		BigInteger gasPrice = Convert.toWei(BigDecimal.valueOf(3), Convert.Unit.GWEI).toBigInteger();
 		BigInteger gasLimit = BigInteger.valueOf(30000);
 		String to = "0x6c0f49aF552F2326DD851b68832730CB7b6C0DaF".toLowerCase();
 		BigInteger value = Convert.toWei(BigDecimal.valueOf(0.5), Convert.Unit.ETHER).toBigInteger();
@@ -138,6 +140,7 @@ public class ColdWallet {
 	 */
 	public static void createWallet(String password) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, CipherException, JsonProcessingException {
 		WalletFile walletFile;
+		//生成秘钥对
 		ECKeyPair ecKeyPair = Keys.createEcKeyPair();
 		walletFile = Wallet.createStandard(password, ecKeyPair);
 		System.out.println("address " + walletFile.getAddress());

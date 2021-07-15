@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -68,15 +69,8 @@ public class TokenClient {
 	public static BigInteger getTokenBalance(Web3j web3j, String fromAddress, String contractAddress) {
 
 		String methodName = "balanceOf";
-		List<Type> inputParameters = new ArrayList<>();
-		List<TypeReference<?>> outputParameters = new ArrayList<>();
-		Address address = new Address(fromAddress);
-		inputParameters.add(address);
-
-		TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
-		};
-		outputParameters.add(typeReference);
-		Function function = new Function(methodName, inputParameters, outputParameters);
+		Function function = new Function(methodName, Collections.singletonList(new Address(fromAddress)),
+				Collections.singletonList(new TypeReference<Uint256>(){}));
 		String data = FunctionEncoder.encode(function);
 		Transaction transaction = Transaction.createEthCallTransaction(fromAddress, contractAddress, data);
 
@@ -239,20 +233,9 @@ public class TokenClient {
 					fromAddress, password, BigInteger.valueOf(10)).send();
 			if (personalUnlockAccount.accountUnlocked()) {
 				String methodName = "transfer";
-				List<Type> inputParameters = new ArrayList<>();
-				List<TypeReference<?>> outputParameters = new ArrayList<>();
 
-				Address tAddress = new Address(toAddress);
-
-				Uint256 value = new Uint256(amount);
-				inputParameters.add(tAddress);
-				inputParameters.add(value);
-
-				TypeReference<Bool> typeReference = new TypeReference<Bool>() {
-				};
-				outputParameters.add(typeReference);
-
-				Function function = new Function(methodName, inputParameters, outputParameters);
+				Function function = new Function(methodName, Arrays.asList(new Address(toAddress), new Uint256(amount)),
+						Collections.singletonList(new TypeReference<Bool>() {}));
 
 				String data = FunctionEncoder.encode(function);
 
@@ -273,5 +256,6 @@ public class TokenClient {
 
 		return txHash;
 	}
+
 
 }

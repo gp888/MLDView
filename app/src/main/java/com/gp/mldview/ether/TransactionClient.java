@@ -53,11 +53,11 @@ public class TransactionClient {
 		try {
 			EthGetBalance ethGetBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
 			balance = ethGetBalance.getBalance();
+			BigDecimal balanceDecimal = Convert.fromWei(balance.toString(), Convert.Unit.ETHER);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		System.out.println("address " + address + " balance " + balance + "wei");
-		Convert.fromWei(balance.toString(), Convert.Unit.ETHER);
 		return balance;
 	}
 
