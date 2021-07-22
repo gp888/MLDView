@@ -97,14 +97,9 @@ public class TokenClient {
 		String methodName = "name";
 		String name = null;
 		String fromAddr = emptyAddress;
-		List<Type> inputParameters = new ArrayList<>();
-		List<TypeReference<?>> outputParameters = new ArrayList<>();
 
-		TypeReference<Utf8String> typeReference = new TypeReference<Utf8String>() {
-		};
-		outputParameters.add(typeReference);
-
-		Function function = new Function(methodName, inputParameters, outputParameters);
+		Function function = new Function(methodName, new ArrayList<>(),
+				Collections.singletonList(new TypeReference<Utf8String>(){}));
 
 		String data = FunctionEncoder.encode(function);
 		Transaction transaction = Transaction.createEthCallTransaction(fromAddr, contractAddress, data);

@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -14,6 +16,12 @@ import com.gp.mldview.ether.Web3jActivity;
 import com.gp.mldview.guideview.GuideDemoActivity;
 import com.gp.mldview.loadingview.LeafLoadingActivity;
 import com.gp.mldview.pie.PieActivity;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity implements View.OnLayoutChangeListener{
 
@@ -48,7 +56,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 case R.id.rxjava2:
 //                    startActivity(new Intent(MainActivity.this, Rxjava2Activity.class));
 //                    startActivity(new Intent(MainActivity.this, SpannableActivity.class));
-                    startActivity(new Intent(MainActivity.this, Web3jActivity.class));
+//                    startActivity(new Intent(MainActivity.this, Web3jActivity.class));
+
+                    writeToExternalStorage();
                     break;
             }
         }
@@ -81,6 +91,46 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         lp.gravity = Gravity.BOTTOM;
         x.setLayoutParams(lp);
         contentParent.addView(x);
+
+
+
+        //严格模式
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectCustomSlowCalls() //API等级11，使用StrictMode.noteSlowCode 自定义的耗时调用
+                .detectDiskReads() //磁盘读取操作
+                .detectDiskWrites() //磁盘写入操作
+                .detectNetwork()  //网络操作
+                .penaltyDialog() //弹出违规提示对话框
+                .detectAll()
+                .penaltyLog() //在Logcat 中打印违规异常信息
+                .build());
+
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .detectActivityLeaks()  //Activity泄露
+                .detectLeakedSqlLiteObjects()  //泄露的Sqlite对象
+                .setClassInstanceLimit(this.getClass(), 1) //检测实例数量
+                .penaltyLog()
+                .build());
+
+
+
+    }
+
+    //测试严格模式
+    public void writeToExternalStorage() {
+        File path = Environment.getExternalStorageDirectory();
+        File destFile = new File(path, "strictmode.txt");
+        try {
+            OutputStream output = new FileOutputStream(destFile, true);
+            output.write("测试strictmnode".getBytes());
+            output.flush();
+            output.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
