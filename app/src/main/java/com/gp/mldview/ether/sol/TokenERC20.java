@@ -1,8 +1,5 @@
 package com.gp.mldview.ether.sol;
 
-import com.blankj.utilcode.util.Utils;
-import com.gp.mldview.R;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;

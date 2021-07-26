@@ -39,7 +39,7 @@ public class ColdWallet {
 
 	private static Web3j web3j;
 
-	private static String d = "/Users/yangzhengwei/Documents/eth/coldwallet";
+	private static String d = "/Users/kaichi/Documents/eth/coldwallet";
 
 	private static String address = "0xa530d89646db11abfa701e148e87324355fc6ea7";
 

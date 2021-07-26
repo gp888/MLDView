@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class TokenBalanceTask {
 
-	public class Token {
+	public static class Token {
 		public String contractAddress;
 		public int decimals;
 		public String name;
@@ -39,7 +39,7 @@ public class TokenBalanceTask {
 	private static List<String> addressList;
 
 	public static void main(String[] args) {
-		web3j = Web3j.build(new HttpService(Environment.RPC_URL));
+		web3j = Web3j.build(new HttpService(Environment.BINANCE_MAIN_RPC_URL));
 		loadData();
 		//如果没有decimals则需要请求
 		requestDecimals();
@@ -50,9 +50,11 @@ public class TokenBalanceTask {
 
 	private static void loadData() {
 		tokenList = new ArrayList<>();
-		// TODO: 2018/3/14 add...
+		//panda
+		tokenList.add(new Token("0xd6b20b77358923327541991d3b0c3dbadb27b0b1"));
+
 		addressList = new ArrayList<>();
-		// TODO: 2018/3/14 add...
+		addressList.add("0xa5cd0a361d8007ef65f1158274573521b33a0032");
 	}
 
 	private static void requestDecimals() {
@@ -72,7 +74,7 @@ public class TokenBalanceTask {
 			for (Token token : tokenList) {
 				BigDecimal balance = new BigDecimal(TokenClient.getTokenBalance(web3j, address, token.contractAddress));
 				balance.divide(BigDecimal.TEN.pow(token.decimals));
-				System.out.println("address " + address + " name " + token.name + " balance " + balance);
+				System.out.println("address " + address + " name " + token.name + " balance " + balance + " decimal " + token.decimals);
 			}
 		}
 	}
