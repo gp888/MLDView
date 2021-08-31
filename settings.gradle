@@ -1,1 +1,3 @@
 include ':app'
+include ':app-version2'
+include ':app-version1'
