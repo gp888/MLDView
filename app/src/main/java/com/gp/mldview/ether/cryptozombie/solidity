@@ -446,3 +446,65 @@ overflow溢出
  assert 则不会。所以大部分情况下，你写代码的时候会比较喜欢 require，assert 只在代码可能出现严重错误的时候使用，比如 uint 溢出。
 
  所以简而言之， SafeMath 的 add， sub， mul， 和 div 方法只做简单的四则运算，然后在发生溢出或下溢的时候抛出错误
+
+ +， -， *， 或 /，然后替换为 add, sub, mul, div.
+
+ 防止 uint16 和 uint32 溢出或下溢。我们可以将其命名为 SafeMath16 和 SafeMath32
+
+
+
+
+{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xb60e8dd61c5d32be8058bb8eb970870f07233155","to":"0xd46e8dd67c5d32be8058bb8eb970870f07244567","gas":"0x76c0","gasPrice":"0x9184e72a000","value":"0x9184e72a","data":"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"}],"id":1}
+var web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
+
+Metamask 把它的 web3 提供者注入到浏览器的全局 JavaScript对象web3中。所以你的应用可以检查 web3 是否存在。若存在就使用 web3.currentProvider 作为它的提供者
+
+var myContract = new web3js.eth.Contract(myABI, myContractAddress);
+
+
+ Web3.js 有两个方法来调用我们合约的函数: call and send.
+ call 用来调用 view 和 pure 函数。它只运行在本地节点，不会在区块链上创建事务。
+
+ 复习: view 和 pure 函数是只读的并不会改变区块链的状态。它们也不会消耗任何gas。用户也不会被要求用MetaMask对事务签名。
+
+ 使用 Web3.js，你可以如下 call 一个名为myMethod的方法并传入一个 123 作为参数：
+
+ myContract.methods.myMethod(123).call()
+
+
+
+ send 将创建一个事务并改变区块链上的数据。你需要用 send 来调用任何非 view 或者 pure 的函数。
+
+ 注意: send 一个事务将要求用户支付gas，并会要求弹出对话框请求用户使用 Metamask 对事务签名。在我们使用 Metamask 作为我们的 web3 提供者的时候，所有这一切都会在我们调用 send() 的时候自动发生
+
+ myContract.methods.myMethod(123).send()
+
+
+Zombie[] public zombies;
+ 当你定义一个 public变量的时候， 它将自动定义一个公开的 "getter" 同名方法， 所以如果你像要查看 id 为 15 的僵尸，你可以像一个函数一样调用它： zombies(15).
+
+
+
+ 为了筛选仅和当前用户相关的事件，我们的 Solidity 合约将必须使用 indexed 关键字，就像我们在 ERC721 实现中的Transfer 事件中那样：
+
+ event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+ 在这种情况下， 因为_from 和 _to 都是 indexed，这就意味着我们可以在前端事件监听中过滤事件
+
+ cryptoZombies.events.Transfer({ filter: { _to: userAccount } })
+ .on("data", function(event) {
+   let data = event.returnValues;
+   // 当前用户更新了一个僵尸！更新界面来显示
+ }).on('error', console.error);
+
+
+
+
+
+ 用 getPastEvents 查询过去的事件，并用过滤器 fromBlock 和 toBlock 给 Solidity 一个事件日志的时间范围("block" 在这里代表以太坊区块编号）：
+
+ cryptoZombies.getPastEvents("NewZombie", { fromBlock: 0, toBlock: 'latest' })
+ .then(function(events) {
+   // events 是可以用来遍历的 `event` 对象
+   // 这段代码将返回给我们从开始以来创建的僵尸列表
+ });
+ 因为你可以用这个方法来查询从最开始起的事件日志，这就有了一个非常有趣的用例： 用事件来作为一种更便宜的存储
