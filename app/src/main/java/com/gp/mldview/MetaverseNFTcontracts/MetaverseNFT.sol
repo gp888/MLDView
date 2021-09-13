@@ -12,13 +12,13 @@ contract MetaverseNFT is ERC721 {
     using SafeMath for uint256;
 
     uint256 public currentMetaverseId;
-    
+
     constructor(
         address owner,  /// Initial owner (Seller)
         string memory _nftName, 
         string memory _nftSymbol,
-        string memory _tokenURI   /// [Note]: TokenURI is URL include ipfs hash
-        //uint metaversePrice
+        string memory _tokenURI,   /// [Note]: TokenURI is URL include ipfs hash
+        uint metaversePrice
     ) 
         public 
         ERC721(_nftName, _nftSymbol) 

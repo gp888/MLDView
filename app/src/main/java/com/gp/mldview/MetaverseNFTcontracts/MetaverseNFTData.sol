@@ -1,18 +1,35 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import { MetaverseNFTDataStorages } from "./metaverse-nft-data/commons/MetaverseNFTDataStorages.sol";
 import { MetaverseNFT } from "./MetaverseNFT.sol";
 
 
 /**
  * @notice - This is the storage contract for metaverseNFTs
  */
-contract MetaverseNFTData is MetaverseNFTDataStorages {
+contract MetaverseNFTData {
+
+    Metaverse[] public metaverses;
 
     address[] public metaverseAddresses;
 
     constructor() public {}
+
+    struct Metaverse {  /// [Key]: index of array
+            MetaverseNFT metaverseNFT;
+            string metaverseNFTName;
+            string metaverseNFTSymbol;
+            address ownerAddress;
+            uint metaversePrice;
+            string ipfsHashOfMetaverse;
+            string status;  /// "Open" or "Cancelled"
+            uint256 reputation;
+            //string metaverseNftDescription;
+            //string fileformat; //fileformat ".mp4" 会被定义为mp4
+            string extra; //extra description
+            //string tags;  //"split by #"
+            //string cover; //cover of nft
+    }
 
     /**
      * @notice - Save metadata of a metaverseNFT
@@ -43,7 +60,7 @@ contract MetaverseNFTData is MetaverseNFTDataStorages {
         });
         metaverses.push(metaverse);
 
-        /// Update metaverseAddresses
+        // Update metaverseAddresses
         metaverseAddresses = _metaverseAddresses;     
     }
 

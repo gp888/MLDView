@@ -1,9 +1,8 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import { SafeMath } from "./openzeppelin-solidity/contracts/math/SafeMath.sol";
+//import { SafeMath } from "./openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { Strings } from "./libraries/Strings.sol";
-import { MetaverseNFTFactoryStorages } from "./metaverse-nft-factory/commons/MetaverseNFTFactoryStorages.sol";
 import { MetaverseNFT } from "./MetaverseNFT.sol";
 import { MetaverseNFTMarketplace } from "./MetaverseNFTMarketplace.sol";
 import { MetaverseNFTData } from "./MetaverseNFTData.sol";
@@ -12,20 +11,39 @@ import { MetaverseNFTData } from "./MetaverseNFTData.sol";
 /**
  * @notice - This is the factory contract for a NFT of metaverse
  */
-contract MetaverseNFTFactory is MetaverseNFTFactoryStorages {
-    using SafeMath for uint256;
-    using Strings for string;    
+contract MetaverseNFTFactory {
+    //using SafeMath for uint256;
+    using Strings for string;
+
+    event MetaverseNFTCreated (
+         address owner,
+         MetaverseNFT metaverseNFT,
+         string nftName,
+         string nftSymbol,
+         uint metaversePrice,
+         string ipfsHashOfMetaverse,
+         //string metaverseNftDescription
+         //string tags,
+         //string fileformat
+         //string cover,
+         string extra
+    );
+
+    event AddReputation (
+        uint256 tokenId,
+        uint256 reputationCount
+    );
 
     address[] public metaverseAddresses;
-    address METAVERSE_NFT_MARKETPLACE;
+    //address METAVERSE_NFT_MARKETPLACE;
 
-    MetaverseNFTMarketplace public metaverseNFTMarketplace;
+    //MetaverseNFTMarketplace public metaverseNFTMarketplace;
     MetaverseNFTData public metaverseNFTData;
 
-    constructor(MetaverseNFTMarketplace _metaverseNFTMarketplace, MetaverseNFTData _metaverseNFTData) public {
-        metaverseNFTMarketplace = _metaverseNFTMarketplace;
+    constructor(MetaverseNFTData _metaverseNFTData) public {
+        //metaverseNFTMarketplace = _metaverseNFTMarketplace;
         metaverseNFTData = _metaverseNFTData;
-        METAVERSE_NFT_MARKETPLACE = address(metaverseNFTMarketplace);
+        //METAVERSE_NFT_MARKETPLACE = address(metaverseNFTMarketplace);
     }
 
     /**

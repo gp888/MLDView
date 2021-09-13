@@ -10,9 +10,9 @@ import { MetaverseNFTData } from "./MetaverseNFTData.sol";
  * @notice - This contract has role that put on sale of metaverseNFTs
  */
 contract MetaverseNFTTradable {
-    event TradeStatusChange(uint256 ad, bytes32 status);
+    event TradeStatusChange(uint256 _metaverseId, bytes32 status);
 
-    MetaverseNFT public metaverseNFT;
+    //MetaverseNFT public metaverseNFT;
     MetaverseNFTData public metaverseNFTData;
 
     struct Trade {
@@ -113,14 +113,14 @@ contract MetaverseNFTTradable {
         Trade memory trade = getTrade(_metaverseId);
         require(trade.status == "Open", "Trade is not Open.");
 
-        _updateSeller(_metaverseNFT, _metaverseId, _buyer);
+        _updateSeller(_metaverseId, _buyer);
 
         metaverseNFT.transferFrom(address(this), _buyer, trade.metaverseId);
         getTrade(_metaverseId).status = "Cancelled";
         emit TradeStatusChange(_metaverseId, "Cancelled");
     }
 
-    function _updateSeller(MetaverseNFT metaverseNFT, uint256 _metaverseId, address _newSeller) internal {
+    function _updateSeller(uint256 _metaverseId, address _newSeller) internal {
         Trade storage trade = trades[_metaverseId];
         trade.seller = _newSeller;
     }

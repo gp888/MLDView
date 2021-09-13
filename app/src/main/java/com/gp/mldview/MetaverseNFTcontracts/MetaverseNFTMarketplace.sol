@@ -5,20 +5,26 @@ pragma experimental ABIEncoderV2;
 import { SafeMath } from "./openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { MetaverseNFT } from "./MetaverseNFT.sol";
 import { MetaverseNFTTradable } from "./MetaverseNFTTradable.sol";
-import { MetaverseNFTMarketplaceEvents } from "./metaverse-nft-marketplace/commons/MetaverseNFTMarketplaceEvents.sol";
 import { MetaverseNFTData } from "./MetaverseNFTData.sol";
 
 
-contract MetaverseNFTMarketplace is MetaverseNFTTradable, MetaverseNFTMarketplaceEvents {
+contract MetaverseNFTMarketplace is MetaverseNFTTradable {
     using SafeMath for uint256;
 
-    address public METAVERSE_NFT_MARKETPLACE;
+    event MetaverseNFTOwnershipChanged (
+            MetaverseNFT metaverseNFT,
+            uint metaverseId,
+            address ownerBeforeOwnershipTransferred,
+            address ownerAfterOwnershipTransferred
+    );
+
+    //address public METAVERSE_NFT_MARKETPLACE;
 
     MetaverseNFTData public metaverseNFTData;
 
     constructor(MetaverseNFTData _metaverseNFTData) public MetaverseNFTTradable(_metaverseNFTData) {
         metaverseNFTData = _metaverseNFTData;
-        address payable METAVERSE_NFT_MARKETPLACE = address(uint160(address(this)));
+        //address payable METAVERSE_NFT_MARKETPLACE = address(uint160(address(this)));
     }
 
     /** 
