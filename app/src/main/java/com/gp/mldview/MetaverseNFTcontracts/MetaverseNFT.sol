@@ -17,12 +17,8 @@ contract MetaverseNFT is ERC721 {
         address owner,  /// Initial owner (Seller)
         string memory _nftName, 
         string memory _nftSymbol,
-        string memory _tokenURI,   /// [Note]: TokenURI is URL include ipfs hash
-        uint metaversePrice
-    ) 
-        public 
-        ERC721(_nftName, _nftSymbol) 
-    {
+        string memory _tokenURI   /// [Note]: TokenURI is URL include ipfs hash
+    ) public  ERC721(_nftName, _nftSymbol) {
         mint(owner, _tokenURI);
     }
 

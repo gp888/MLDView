@@ -47,16 +47,8 @@ contract MetaverseNFTTradable {
             return;
         }
 
-        metaverseNFT.transferFrom(msg.sender, address(this), _metaverseId);
+        metaverseNFT.transferFrom(msg.sender, address(this), 1);
         metaverseNFTData.updateStatus(metaverseNFT, "Open");
-        //tradeCounter += 1;    /// [Note]: New. Trade count is started from "1". This is to align metaverseId
-        /*trades[tradeCounter] = Trade({
-            seller: msg.sender,
-            metaverseId: _metaverseId,
-            metaversePrice: _metaversePrice,
-            isValid : true,
-            status: "Open"
-        });*/
         trades[_metaverseId] = Trade({
             seller: msg.sender,
             metaverseId: _metaverseId,
@@ -64,15 +56,13 @@ contract MetaverseNFTTradable {
             isValid : true,
             status: "Open"
         });
-        //tradeCounter += 1;  /// [Note]: Original
-        //emit TradeStatusChange(tradeCounter - 1, "Open");
         emit TradeStatusChange(_metaverseId,"Open");
     }
 
     /**
      * @dev Opens a trade by the seller.
      */
-    function openTrade(MetaverseNFT metaverseNFT, uint256 _metaverseId,uint256 _metaversePrice) public {
+    function openTrade(MetaverseNFT metaverseNFT, uint256 _metaverseId, uint256 _metaversePrice) public {
         metaverseNFTData.updateStatus(metaverseNFT, "Open");
         metaverseNFTData.updatePrice(metaverseNFT,_metaversePrice);
         Trade storage trade = trades[_metaverseId];
@@ -105,7 +95,8 @@ contract MetaverseNFTTradable {
     }
 
     /**
-     * @dev Executes a trade. Must have approved this contract to transfer the amount of currency specified to the seller. Transfers ownership of the metaverseId to the filler.
+     * @dev Executes a trade.
+     * Must have approved this contract to transfer the amount of currency specified to the seller. Transfers ownership of the metaverseId to the filler.
      */
     function transferOwnershipOfMetaverseNFT(MetaverseNFT _metaverseNFT, uint256 _metaverseId, address _buyer) public {
         MetaverseNFT metaverseNFT = _metaverseNFT;

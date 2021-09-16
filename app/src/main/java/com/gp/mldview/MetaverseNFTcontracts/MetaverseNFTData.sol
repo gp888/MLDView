@@ -16,6 +16,7 @@ contract MetaverseNFTData {
     constructor() public {}
 
     struct Metaverse {  /// [Key]: index of array
+            uint256 id;
             MetaverseNFT metaverseNFT;
             string metaverseNFTName;
             string metaverseNFTSymbol;
@@ -35,7 +36,7 @@ contract MetaverseNFTData {
      * @notice - Save metadata of a metaverseNFT
      */
     function saveMetadataOfMetaverseNFT(
-        address[] memory _metaverseAddresses, 
+        address _metaverseAddresses, 
         MetaverseNFT _metaverseNFT, 
         string memory _metaverseNFTName, 
         string memory _metaverseNFTSymbol, 
@@ -47,6 +48,7 @@ contract MetaverseNFTData {
     ) public returns (bool) {
         /// Save metadata of a metaverseNFT of metaverse
         Metaverse memory metaverse = Metaverse({
+            id : metaverses.length();
             metaverseNFT: _metaverseNFT,
             metaverseNFTName: _metaverseNFTName,
             metaverseNFTSymbol: _metaverseNFTSymbol,
@@ -61,7 +63,7 @@ contract MetaverseNFTData {
         metaverses.push(metaverse);
 
         // Update metaverseAddresses
-        metaverseAddresses = _metaverseAddresses;     
+        metaverseAddresses.push(_metaverseAddresses);  
     }
 
     /**
@@ -87,7 +89,7 @@ contract MetaverseNFTData {
 
         /// Update metadata of a metaverseNFT of metaverse
         Metaverse storage metaverse = metaverses[metaverseIndex];
-        metaverse.status = _newStatus;  
+        metaverse.status = _newStatus;
     }
 
     function updatePrice(MetaverseNFT _metaverseNFT, uint _price) public returns (bool) {

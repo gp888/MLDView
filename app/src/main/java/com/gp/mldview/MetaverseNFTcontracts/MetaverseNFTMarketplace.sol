@@ -1,7 +1,6 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-//import { ERC20 } from './openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 import { SafeMath } from "./openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { MetaverseNFT } from "./MetaverseNFT.sol";
 import { MetaverseNFTTradable } from "./MetaverseNFTTradable.sol";
@@ -18,13 +17,10 @@ contract MetaverseNFTMarketplace is MetaverseNFTTradable {
             address ownerAfterOwnershipTransferred
     );
 
-    //address public METAVERSE_NFT_MARKETPLACE;
-
-    MetaverseNFTData public metaverseNFTData;
+    // address public METAVERSE_NFT_MARKETPLACE;
 
     constructor(MetaverseNFTData _metaverseNFTData) public MetaverseNFTTradable(_metaverseNFTData) {
-        metaverseNFTData = _metaverseNFTData;
-        //address payable METAVERSE_NFT_MARKETPLACE = address(uint160(address(this)));
+        // address payable METAVERSE_NFT_MARKETPLACE = address(uint160(address(this)));
     }
 
     /** 

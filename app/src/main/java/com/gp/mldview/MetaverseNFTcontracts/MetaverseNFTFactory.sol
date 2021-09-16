@@ -1,8 +1,7 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-//import { SafeMath } from "./openzeppelin-solidity/contracts/math/SafeMath.sol";
-import { Strings } from "./libraries/Strings.sol";
+import { Strings } from "./openzeppelin-solidity/contracts/utils/Strings.sol";
 import { MetaverseNFT } from "./MetaverseNFT.sol";
 import { MetaverseNFTMarketplace } from "./MetaverseNFTMarketplace.sol";
 import { MetaverseNFTData } from "./MetaverseNFTData.sol";
@@ -12,20 +11,16 @@ import { MetaverseNFTData } from "./MetaverseNFTData.sol";
  * @notice - This is the factory contract for a NFT of metaverse
  */
 contract MetaverseNFTFactory {
-    //using SafeMath for uint256;
     using Strings for string;
 
     event MetaverseNFTCreated (
+         uint256 id,
          address owner,
          MetaverseNFT metaverseNFT,
          string nftName,
          string nftSymbol,
          uint metaversePrice,
          string ipfsHashOfMetaverse,
-         //string metaverseNftDescription
-         //string tags,
-         //string fileformat
-         //string cover,
          string extra
     );
 
@@ -34,16 +29,11 @@ contract MetaverseNFTFactory {
         uint256 reputationCount
     );
 
-    address[] public metaverseAddresses;
-    //address METAVERSE_NFT_MARKETPLACE;
-
-    //MetaverseNFTMarketplace public metaverseNFTMarketplace;
     MetaverseNFTData public metaverseNFTData;
+    
 
     constructor(MetaverseNFTData _metaverseNFTData) public {
-        //metaverseNFTMarketplace = _metaverseNFTMarketplace;
-        metaverseNFTData = _metaverseNFTData;
-        //METAVERSE_NFT_MARKETPLACE = address(metaverseNFTMarketplace);
+         metaverseNFTData = _metaverseNFTData;
     }
 
     /**
@@ -51,16 +41,16 @@ contract MetaverseNFTFactory {
      */
     function createNewMetaverseNFT(string memory nftName, string memory nftSymbol, uint metaversePrice, string memory ipfsHashOfMetaverse,string memory extra)
         public returns (bool) {
-        address owner = msg.sender;  /// [Note]: Initial owner of metaverseNFT is msg.sender
+        address owner = msg.sender;
         string memory tokenURI = getTokenURI(ipfsHashOfMetaverse);  /// [Note]: IPFS hash + URL
-        MetaverseNFT metaverseNFT = new MetaverseNFT(owner, nftName, nftSymbol, tokenURI, metaversePrice);
-        metaverseAddresses.push(address(metaverseNFT));
+        MetaverseNFT metaverseNFT = new MetaverseNFT(owner, nftName, nftSymbol, tokenURI);
 
         /// Save metadata of a metaverseNFT created
-        metaverseNFTData.saveMetadataOfMetaverseNFT(metaverseAddresses, metaverseNFT, nftName, nftSymbol, msg.sender, metaversePrice, ipfsHashOfMetaverse,extra);
+        metaverseNFTData.saveMetadataOfMetaverseNFT(address(metaverseNFT), metaverseNFT, nftName, nftSymbol, msg.sender, metaversePrice, ipfsHashOfMetaverse, extra);
         metaverseNFTData.updateStatus(metaverseNFT, "Cancelled");
 
-        emit MetaverseNFTCreated(msg.sender, metaverseNFT, nftName, nftSymbol, metaversePrice, ipfsHashOfMetaverse,extra);
+
+        emit MetaverseNFTCreated(metaverseNFTData.metaverses.length - 1, msg.sender, metaverseNFT, nftName, nftSymbol, metaversePrice, ipfsHashOfMetaverse,extra);
     }
 
     ///-----------------
