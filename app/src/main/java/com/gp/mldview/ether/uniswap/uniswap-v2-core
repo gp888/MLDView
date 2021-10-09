@@ -1,0 +1,303 @@
+core 核心主要有三个合约文件：
+
+UniswapV2Factory.sol：工厂合约
+UniswapV2Pair.sol：配对合约
+UniswapV2ERC20.sol：LP Token 合约
+
+
+UniswapV2ERC20---继承---> UniswapV2Pair---引用--->UniswapV2Factory
+
+
+配对合约管理着流动性资金池，不同币对有着不同的配对合约实例，比如 USDT-WETH 这一个币对，就对应一个配对合约实例，DAI-WETH 又对应另一个配对合约实例
+
+LP Token 则是用户往资金池里注入流动性的一种凭证，也称为流动性代币，本质上和 Compound 的 cToken 类似。当用户往某个币对的配对合约里转入两种币，即添加流动性，就可以得到配对合约返回的 LP Token，享受手续费分成收益。
+
+每个配对合约都有对应的一种 LP Token 与之绑定。其实，UniswapV2Pair 继承了 UniswapV2ERC20，所以配对合约本身其实也是 LP Token 合约。
+
+工厂合约则是用来部署配对合约的，通过工厂合约的 createPair() 函数来创建新的配对合约实例
+
+
+
+
+
+
+
+
+
+工厂合约:
+最核心的函数就是 createPair()
+
+function createPair(address tokenA, address tokenB) external override returns (address pair) {
+        require(tokenA != tokenB, 'UniswapV2: IDENTICAL_ADDRESSES');
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        require(token0 != address(0), 'UniswapV2: ZERO_ADDRESS');
+        require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
+        // bytes memory bytecode = type(UniswapV2Pair).creationCode;
+        // bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+        // assembly {
+        //     // pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        //     pair := create(0, mload(bytecode), salt)
+        // }
+        pair = (address)(new UniswapV2Pair());
+        IUniswapV2Pair(pair).initialize(token0, token1);
+        getPair[token0][token1] = pair;
+        getPair[token1][token0] = pair; // populate mapping in the reverse direction
+        allPairs.push(pair);
+        emit PairCreated(token0, token1, pair, allPairs.length);
+    }
+
+ 里面创建合约采用了 create2，这是一个汇编 opcode
+
+ 一般创建新合约可以使用 new 关键字
+ UniswapV2Pair newPair = new UniswapV2Pair();
+
+
+ 使用 create2 最大的好处其实在于：可以在部署智能合约前预先计算出合约的部署地址。最关键的就是以下这几行代码：
+
+ bytes memory bytecode = type(UniswapV2Pair).creationCode;
+ bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+ assembly {
+   pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
+ }
+ 第一行获取 UniswapV2Pair 合约代码的创建字节码 creationCode，结果值一般是这样：
+
+ 0x0cf061edb29fff92bda250b607ac9973edf2282cff7477decd42a678e4f9b868
+ 类似的，其实还有运行时的字节码 runtimeCode，但这里没有用到
+
+第二行根据两个代币地址计算出一个盐值，对于任意币对，计算出的盐值也是固定的，所以也可以线下计算出该币对的盐值。
+
+接着就用 assembly 关键字包起一段内嵌汇编代码，里面调用 create2 操作码来创建新合约。因为 UniswapV2Pair 合约的创建字节码是固定的，两个币对的盐值也是固定的，所以最终计算出来的 pair 地址其实也是固定的
+
+
+
+
+
+
+
+UniswapV2ERC20合约
+
+配对合约继承了 UniswapV2ERC20 合约
+UniswapV2ERC20 是流动性代币合约，也称为 LP Token，但代币实际名称为 Uniswap V2，简称为 UNI-V2
+
+
+UniswapV2ERC20 还提供了一个 permit() 函数，它允许用户在链下签署授权（approve）的交易，生成任何人都可以使用并提交给区块链的签名
+
+
+
+
+
+
+
+
+
+
+配对合约
+
+配对合约是由工厂合约创建的
+
+constructor() public {
+	factory = msg.sender;
+}
+
+// called once by the factory at time of deployment
+function initialize(address _token0, address _token1) external {
+  require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
+  token0 = _token0;
+  token1 = _token1;
+}
+
+为什么还要另外定义一个初始化函数，而不直接将 _token0 和 _token1 在构造函数中作为入参进行初始化呢？这是因为用 create2 创建合约的方式限制了构造函数不能有参数
+
+配对合约中最核心的函数有三个：mint()、burn()、swap() 。分别是添加流动性、移除流动性、兑换三种操作的底层函数。
+
+
+
+
+
+
+
+mint() 函数
+主要是通过同时注入两种代币资产来获取流动性代币
+
+// this low-level function should be called from a contract which performs important safety checks
+    function mint(address to) external lock returns (uint liquidity) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        uint balance0 = IERC20(token0).balanceOf(address(this));
+        uint balance1 = IERC20(token1).balanceOf(address(this));
+        uint amount0 = balance0.sub(_reserve0);
+        uint amount1 = balance1.sub(_reserve1);
+
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+        if (_totalSupply == 0) {
+            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
+           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
+        } else {
+            liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
+        }
+        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        _mint(to, liquidity);
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+        emit Mint(msg.sender, amount0, amount1);
+    }
+
+调用该函数之前，路由合约已经完成了将用户的代币数量划转到该配对合约的操作。因此，你看前五行代码，
+通过获取两个币的当前余额 balance0 和 balance1，再分别减去 _reserve0 和 _reserve1，即池子里两个代币原有的数量，
+就计算得出了两个代币的投入数量 amount0 和 amount1。另外，还给该函数添加了 lock 的修饰器，这是一个防止重入的修饰器，
+保证了每次添加流动性时不会有多个用户同时往配对合约里转账，不然就没法计算用户的 amount0 和 amount1 了。
+
+第 6 行代码是计算协议费用的。在工厂合约中有一个 feeTo 的地址，如果设置了该地址不为零地址，就表示添加和移除流动性时会收取协议费用，但 Uniswap 一直到现在都没有设置该地址。
+接着从第 7 行到第 15 行代码则是计算用户能得到多少流动性代币了。当 totalSupply 为 0 时则是最初的流动性，计算公式为：
+
+liquidity = √(amount0*amount1) - MINIMUM_LIQUIDITY
+即两个代币投入的数量相乘后求平方根，结果再减去最小流动性。最小流动性为 1000，该最小流动性会永久锁在零地址。这么做，主要还是为了安全
+如果不是提供最初流动性的话，那流动性则是取以下两个值中较小的那个：
+
+liquidity1 = amount0 * totalSupply / reserve0
+liquidity2 = amount1 * totalSupply / reserve1
+计算出用户该得的流动性 liquidity 之后，就会调用前面说的 _mint() 函数铸造出 liquidity 数量的 LP Token 并给到用户。
+
+接着就会调用 _update() 函数，该函数主要做两个事情，一是更新 reserve0 和 reserve1，二是累加计算 price0CumulativeLast 和 price1CumulativeLast，这两个价格是用来计算 TWAP 的
+倒数第 2 行则是判断如果协议费用开启的话，更新 kLast 值，即 reserve0 和 reserve1 的乘积值，该值其实只在计算协议费用时用到。
+
+最后一行就是触发一个 Mint() 事件的发出。
+
+
+
+
+
+
+
+
+
+burn() 函数
+
+这是移除流动性的底层函数
+
+// this low-level function should be called from a contract which performs important safety checks
+    function burn(address to) external lock returns (uint amount0, uint amount1) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        address _token0 = token0;                                // gas savings
+        address _token1 = token1;                                // gas savings
+        uint balance0 = IERC20(_token0).balanceOf(address(this));
+        uint balance1 = IERC20(_token1).balanceOf(address(this));
+        uint liquidity = balanceOf[address(this)];
+
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
+        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
+        require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
+        _burn(address(this), liquidity);
+        _safeTransfer(_token0, to, amount0);
+        _safeTransfer(_token1, to, amount1);
+        balance0 = IERC20(_token0).balanceOf(address(this));
+        balance1 = IERC20(_token1).balanceOf(address(this));
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+        emit Burn(msg.sender, amount0, amount1, to);
+    }
+
+    主要就是销毁掉流动性代币并提取相应的两种代币资产给到用户
+    第 6 行代码，获取当前合约地址的流动性代币余额。正常情况下，配对合约里是不会有流动性代币的，因为所有流动性代币都是给到了流动性提供者的。而这里有值，其实是因为路由合约会先把用户的流动性代币划转到该配对合约里
+
+    第 7 行代码计算协议费用和 mint() 函数一样的。
+
+    接着就是计算两个代币分别可以提取的数量了，计算公式也很简单：
+
+    amount = liquidity / totalSupply * balance
+    提取数量 = 用户流动性 / 总流动性 * 代币总余额
+
+
+    用户流动性除以总流动性就得出了用户在整个流动性池子里的占比是多少，再乘以代币总余额就得出用户应该分得多少代币了。举例：用户的 liquidity 为 1000，totalSupply 有 10000，即是说用户的流动性占比为 10%，那假如池子里现在代币总额有 2000 枚，那用户就可分得这 2000 枚的 10% 即 200 枚。
+
+    后面的逻辑就是调用 _burn() 销毁掉流动性代币，且将两个代币资产计算所得数量划转给到用户，最后更新两个代币的 reserve。
+
+    最后两行代码也和 mint() 函数一样
+
+
+
+
+
+
+
+
+
+swap() 函数
+
+兑换交易的底层函数
+
+// this low-level function should be called from a contract which performs important safety checks
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
+        require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+
+        uint balance0;
+        uint balance1;
+        { // scope for _token{0,1}, avoids stack too deep errors
+        address _token0 = token0;
+        address _token1 = token1;
+        require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
+        if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
+        if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
+        if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+        balance0 = IERC20(_token0).balanceOf(address(this));
+        balance1 = IERC20(_token1).balanceOf(address(this));
+        }
+        uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+        uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+        require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+        { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
+        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
+        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+        }
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
+    }
+
+
+    该函数有 4 个入参，amount0Out 和 amount1Out 表示兑换结果要转出的 token0 和 token1 的数量，
+    这两个值通常情况下是一个为 0，一个不为 0，但使用闪电交易时可能两个都不为 0。to 参数则是接收者地址，
+    最后的 data 参数是执行回调时的传递数据，通过路由合约兑换的话，该值为 0
+
+    第一步先校验兑换结果的数量是否有一个大于 0，然后读取出两个代币的 reserve，之后再校验兑换数量是否小于 reserve。
+
+    从第 6 行开始，到第 15 行结束，用了一对大括号，这主要是为了限制 _token{0,1} 这两个临时变量的作用域，防止堆栈太深导致错误。
+
+    接着，看看第 10 和 11 行，就开始将代币划转到接收者地址了。看到这里，有些小伙伴可能会产生疑问：这是个 external 函数，任何用户都可以自行调用的，没有校验就直接划转了，那不是谁都可以随便提币了？其实，在后面是有校验的
+
+
+    第 12 行，如果 data 参数长度大于 0，则将 to 地址转为 IUniswapV2Callee 并调用其 uniswapV2Call() 函数，这其实就是一个回调函数，to 地址需要实现该接口。
+
+    第 13 和 14 行，获取两个代币当前的余额 balance{0,1} ，而这个余额是扣减了转出代币后的余额。
+
+    第 16 和 17 行则是计算出实际转入的代币数量了。实际转入的数量其实也通常是一个为 0，一个不为 0 的。要理解计算公式的原理
+
+    假设转入的是 token0，转出的是 token1，转入数量为 100，转出数量为 200
+
+    amount0In = 100
+    amount1In = 0
+    amount0Out = 0
+    amount1Out = 200
+
+    而 reserve0 和 reserve1 假设分别为 1000 和 2000，没进行兑换交易之前，balance{0,1} 和 reserve{0,1} 是相等的。
+    而完成了代币的转入和转出之后，其实，balance0 就变成了 1000 + 100 - 0 = 1100，balance1 变成了 2000 + 0 - 200 = 1800
+
+    balance0 = reserve0 + amount0In - amout0Out
+    balance1 = reserve1 + amount1In - amout1Out
+
+    反推一下就得到：
+
+    amountIn = balance - (reserve - amountOut)
+    amountIn = balance - (reserve - amountOut)
+
+    之后的代码则是进行扣减交易手续费后的恒定乘积校验
+
+
+    其中，0.003 是交易手续费率，X0 和 Y0 就是 reserve0 和 reserve1，X1 和 Y1 则是 balance0 和 balance1，Xin 和 Yin 则对应于 amount0In 和 amount1In。该公式成立就说明在进行这个底层的兑换之前的确已经收过交易手续费了
