@@ -201,22 +201,25 @@ burn() 函数
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
-    主要就是销毁掉流动性代币并提取相应的两种代币资产给到用户
-    第 6 行代码，获取当前合约地址的流动性代币余额。正常情况下，配对合约里是不会有流动性代币的，因为所有流动性代币都是给到了流动性提供者的。而这里有值，其实是因为路由合约会先把用户的流动性代币划转到该配对合约里
+主要就是销毁掉流动性代币并提取相应的两种代币资产给到用户
+第 6 行代码，获取当前合约地址的流动性代币余额。正常情况下，配对合约里是不会有流动性代币的，
+因为所有流动性代币都是给到了流动性提供者的。而这里有值，其实是因为路由合约会先把用户的流动性代币划转到该配对合约里
 
-    第 7 行代码计算协议费用和 mint() 函数一样的。
+第 7 行代码计算协议费用和 mint() 函数一样的。
 
-    接着就是计算两个代币分别可以提取的数量了，计算公式也很简单：
+接着就是计算两个代币分别可以提取的数量了，计算公式也很简单：
 
-    amount = liquidity / totalSupply * balance
-    提取数量 = 用户流动性 / 总流动性 * 代币总余额
+amount = liquidity / totalSupply * balance
+提取数量 = 用户流动性 / 总流动性 * 代币总余额
 
 
-    用户流动性除以总流动性就得出了用户在整个流动性池子里的占比是多少，再乘以代币总余额就得出用户应该分得多少代币了。举例：用户的 liquidity 为 1000，totalSupply 有 10000，即是说用户的流动性占比为 10%，那假如池子里现在代币总额有 2000 枚，那用户就可分得这 2000 枚的 10% 即 200 枚。
+用户流动性除以总流动性就得出了用户在整个流动性池子里的占比是多少，再乘以代币总余额就得出用户应该分得多少代币了。
+举例：用户的 liquidity 为 1000，totalSupply 有 10000，即是说用户的流动性占比为 10%，
+那假如池子里现在代币总额有 2000 枚，那用户就可分得这 2000 枚的 10% 即 200 枚。
 
-    后面的逻辑就是调用 _burn() 销毁掉流动性代币，且将两个代币资产计算所得数量划转给到用户，最后更新两个代币的 reserve。
+后面的逻辑就是调用 _burn() 销毁掉流动性代币，且将两个代币资产计算所得数量划转给到用户，最后更新两个代币的 reserve。
 
-    最后两行代码也和 mint() 函数一样
+最后两行代码也和 mint() 函数一样
 
 
 
@@ -262,42 +265,691 @@ swap() 函数
     }
 
 
-    该函数有 4 个入参，amount0Out 和 amount1Out 表示兑换结果要转出的 token0 和 token1 的数量，
-    这两个值通常情况下是一个为 0，一个不为 0，但使用闪电交易时可能两个都不为 0。to 参数则是接收者地址，
-    最后的 data 参数是执行回调时的传递数据，通过路由合约兑换的话，该值为 0
+该函数有 4 个入参，amount0Out 和 amount1Out 表示兑换结果要转出的 token0 和 token1 的数量，
+这两个值通常情况下是一个为 0，一个不为 0，但使用闪电交易时可能两个都不为 0。to 参数则是接收者地址，
+最后的 data 参数是执行回调时的传递数据，通过路由合约兑换的话，该值为 0
 
-    第一步先校验兑换结果的数量是否有一个大于 0，然后读取出两个代币的 reserve，之后再校验兑换数量是否小于 reserve。
+第一步先校验兑换结果的数量是否有一个大于 0，然后读取出两个代币的 reserve，之后再校验兑换数量是否小于 reserve。
 
-    从第 6 行开始，到第 15 行结束，用了一对大括号，这主要是为了限制 _token{0,1} 这两个临时变量的作用域，防止堆栈太深导致错误。
+从第 6 行开始，到第 15 行结束，用了一对大括号，这主要是为了限制 _token{0,1} 这两个临时变量的作用域，防止堆栈太深导致错误。
 
-    接着，看看第 10 和 11 行，就开始将代币划转到接收者地址了。看到这里，有些小伙伴可能会产生疑问：这是个 external 函数，任何用户都可以自行调用的，没有校验就直接划转了，那不是谁都可以随便提币了？其实，在后面是有校验的
-
-
-    第 12 行，如果 data 参数长度大于 0，则将 to 地址转为 IUniswapV2Callee 并调用其 uniswapV2Call() 函数，这其实就是一个回调函数，to 地址需要实现该接口。
-
-    第 13 和 14 行，获取两个代币当前的余额 balance{0,1} ，而这个余额是扣减了转出代币后的余额。
-
-    第 16 和 17 行则是计算出实际转入的代币数量了。实际转入的数量其实也通常是一个为 0，一个不为 0 的。要理解计算公式的原理
-
-    假设转入的是 token0，转出的是 token1，转入数量为 100，转出数量为 200
-
-    amount0In = 100
-    amount1In = 0
-    amount0Out = 0
-    amount1Out = 200
-
-    而 reserve0 和 reserve1 假设分别为 1000 和 2000，没进行兑换交易之前，balance{0,1} 和 reserve{0,1} 是相等的。
-    而完成了代币的转入和转出之后，其实，balance0 就变成了 1000 + 100 - 0 = 1100，balance1 变成了 2000 + 0 - 200 = 1800
-
-    balance0 = reserve0 + amount0In - amout0Out
-    balance1 = reserve1 + amount1In - amout1Out
-
-    反推一下就得到：
-
-    amountIn = balance - (reserve - amountOut)
-    amountIn = balance - (reserve - amountOut)
-
-    之后的代码则是进行扣减交易手续费后的恒定乘积校验
+接着，看看第 10 和 11 行，就开始将代币划转到接收者地址了。看到这里，有些小伙伴可能会产生疑问：这是个 external 函数，任何用户都可以自行调用的，没有校验就直接划转了，那不是谁都可以随便提币了？其实，在后面是有校验的
 
 
-    其中，0.003 是交易手续费率，X0 和 Y0 就是 reserve0 和 reserve1，X1 和 Y1 则是 balance0 和 balance1，Xin 和 Yin 则对应于 amount0In 和 amount1In。该公式成立就说明在进行这个底层的兑换之前的确已经收过交易手续费了
+第 12 行，如果 data 参数长度大于 0，则将 to 地址转为 IUniswapV2Callee 并调用其 uniswapV2Call() 函数，这其实就是一个回调函数，to 地址需要实现该接口。
+
+第 13 和 14 行，获取两个代币当前的余额 balance{0,1} ，而这个余额是扣减了转出代币后的余额。
+
+第 16 和 17 行则是计算出实际转入的代币数量了。实际转入的数量其实也通常是一个为 0，一个不为 0 的。要理解计算公式的原理
+
+假设转入的是 token0，转出的是 token1，转入数量为 100，转出数量为 200
+
+amount0In = 100
+amount1In = 0
+amount0Out = 0
+amount1Out = 200
+
+而 reserve0 和 reserve1 假设分别为 1000 和 2000，没进行兑换交易之前，balance{0,1} 和 reserve{0,1} 是相等的。
+而完成了代币的转入和转出之后，其实，balance0 就变成了 1000 + 100 - 0 = 1100，balance1 变成了 2000 + 0 - 200 = 1800
+
+balance0 = reserve0 + amount0In - amout0Out
+balance1 = reserve1 + amount1In - amout1Out
+
+反推一下就得到：
+
+amountIn = balance - (reserve - amountOut)
+amountIn = balance - (reserve - amountOut)
+
+之后的代码则是进行扣减交易手续费后的恒定乘积校验
+
+
+其中，0.003 是交易手续费率，X0 和 Y0 就是 reserve0 和 reserve1，X1 和 Y1 则是 balance0 和 balance1，
+Xin 和 Yin 则对应于 amount0In 和 amount1In。该公式成立就说明在进行这个底层的兑换之前的确已经收过交易手续费了
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+UniswapV2Migrator.sol：迁移合约，从 V1 迁移到 V2 的合约
+UniswapV2Router01.sol：路由合约 01 版本
+UniswapV2Router02.sol：路由合约 02 版本，相比 01 版本主要增加了几个支持交税费用的函数
+interfaces：接口都统一放在该目录下
+libraries：存放用到的几个库文件
+test：里面有几个测试用的合约
+examples：一些很有用的示例合约，包括 TWAP、闪电兑换等
+
+
+
+
+
+
+
+
+
+
+
+
+ UniswapV2Library
+
+
+ 主要提供了以下这些函数：
+
+ sortTokens：对两个 token 进行排序
+ pairFor：计算出两个 token 的 pair 合约地址
+ getReserves：获取两个 token 在池子里里的储备量
+ quote：根据给定的两个 token 的储备量和其中一个 token 数量，计算得到另一个 token 等值的数值
+ getAmountOut：根据给定的两个 token 的储备量和输入的 token 数量，计算得到输出的 token 数量，该计算会扣减掉 0.3% 的手续费
+ getAmountIn：根据给定的两个 token 的储备量和输出的 token 数量，计算得到输入的 token 数量，该计算会扣减掉 0.3% 的手续费
+ getAmountsOut：根据兑换路径和输入数量，计算得到兑换路径中每个交易对的输出数量
+ getAmountsIn：根据兑换路径和输出数量，计算得到兑换路径中每个交易对的输入数量
+
+
+
+
+
+     pairFor，用来计算得到两个 token 的配对合约地址
+
+     function pairFor(address factory, address tokenA, address tokenB) internal view returns (address pair) {
+             // (address token0, address token1) = sortTokens(tokenA, tokenB);
+             // pair = address(uint(keccak256(abi.encodePacked(
+             //         hex'ff',
+             //         factory,
+             //         keccak256(abi.encodePacked(token0, token1)),
+             //         hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+             //     ))));
+             pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+         }
+
+         有个「init code hash」是硬编码的。该值其实是 UniswapV2Pair 合约的 creationCode 的哈希值
+
+         可以在 UniswapV2Factory 合约中添加以下常量获取到该值：
+
+         bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(UniswapV2Pair).creationCode));
+
+INIT_CODE_PAIR_HASH 的值是带有 0x 开头的。而以上硬编码的 init code hash 前面已经加了 hex 关键字，所以单引号里的哈希值就不再需要 0x 开头。
+
+
+
+
+getAmountOut 的实现
+
+ function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {
+        require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');
+        require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
+        uint amountInWithFee = amountIn.mul(997);
+        uint numerator = amountInWithFee.mul(reserveOut);
+        uint denominator = reserveIn.mul(1000).add(amountInWithFee);
+        amountOut = numerator / denominator;
+    }
+
+
+
+根据 AMM 的原理，恒定乘积公式「x * y = K」，兑换前后 K 值不变。因此，在不考虑交易手续费的情况下，以下公式会成立：
+
+reserveIn * reserveOut = (reserveIn + amountIn) * (reserveOut - amountOut)
+将公式右边的表达式展开，并推导下，就变成了：
+
+reserveIn * reserveOut = reserveIn * reserveOut + amountIn * reserveOut - (reserveIn + amountIn) * amountOut
+->
+amountIn * reserveOut = (reserveIn + amountIn) * amountOut
+->
+amountOut = amountIn * reserveOut / (reserveIn + amountIn)
+而实际上交易时，还需要扣减千分之三的交易手续费，所以实际上：
+
+amountIn = amountIn * 997 / 1000
+代入上面的公式后，最终结果就变成了：
+
+amountOut = (amountIn * 997 / 1000) * reserverOut / (reserveIn + amountIn * 997 / 1000)
+->
+amountOut = amountIn * 997 * reserveOut / 1000 * (reserveIn + amountIn * 997 / 1000)
+->
+amountOut = amountIn * 997 * reserveOut / (reserveIn * 1000 + amountIn * 997)
+
+amountOut = (amountIn * 997 / 1000) * reserverOut / (reserveIn + amountIn * 997 / 1000)
+->
+amountOut = amountIn * 997 * reserveOut / 1000 * (reserveIn + amountIn * 997 / 1000)
+->
+amountOut = amountIn * 997 * reserveOut / (reserveIn * 1000 + amountIn * 997)
+这即是最后代码实现中的计算公式了。
+
+
+getAmountIn 是类似的
+
+
+
+
+
+
+getAmountsOut 的代码实现
+
+
+
+ function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {
+         require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');
+         amounts = new uint[](path.length);
+         amounts[0] = amountIn;
+         for (uint i; i < path.length - 1; i++) {
+             (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);
+             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+         }
+     }
+
+
+
+     该函数会计算 path 中每一个中间资产和最终资产的数量，比如 path 为 [A,B,C]，则会先将 A 兑换成 B，再将 B 兑换成 C。返回值则是一个数组，第一个元素是 A 的数量，即 amountIn，而第二个元素则是兑换到的代币 B 的数量，最后一个元素则是最终要兑换得到的代币 C 的数量。
+
+     从代码中还可看到，每一次兑换其实都调用了 getAmountOut 函数，这也意味着每一次中间兑换都会扣减千分之三的交易手续费。那如果兑换两次，实际支付假设为 1000，那最终实际兑换得到的价值只剩下：
+
+     1000 * (1 - 0.003) * (1 - 0.003) = 994.009
+     即实际支付的交易手续费将近千分之六了。兑换路径越长，实际扣减的交易手续费会更多，所以兑换路径一般不宜过长。
+
+
+
+
+
+
+
+
+
+
+
+
+
+ UniswapV2Router02 路由合约是与用户进行交互的入口，主要提供了添加流动性、移除流动性和兑换的系列接口，并提供了几个查询接口。
+
+
+ 添加流动性接口
+ 添加流动性，本质上就是支付两种代币，换回对应这两种代币的流动性代币 LP-Token。
+
+ 添加流动性的接口有两个：
+
+ addLiquidity：该接口支持添加两种 ERC20 代币作为流动性
+ addLiquidityETH：与上一个接口不同，该接口提供的流动性资产，其中有一个是 ETH
+
+
+
+ function addLiquidity(
+         address tokenA,
+         address tokenB,
+         uint256 amountADesired,
+         uint256 amountBDesired,
+         uint256 amountAMin,
+         uint256 amountBMin,
+         address to,
+         uint256 deadline
+     )
+         external
+         virtual
+         override
+         ensure(deadline)
+         returns (
+             uint256 amountA,
+             uint256 amountB,
+             uint256 liquidity
+         )
+     {
+         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
+         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
+         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
+         liquidity = IUniswapV2Pair(pair).mint(to);
+     }
+
+
+     tokenA 和 tokenB 就是配对的两个代币，tokenADesired 和 tokenBDesired 是预期支付的两个代币的数量，
+     amountAMin 和 amountBMin 则是用户可接受的最小成交数量，to 是接收流动性代币的地址，deadline 是该笔交易的有效时间，
+     如果超过该时间还没得到交易处理就直接失效不进行交易了。
+
+     这几个参数，amountAMin 和 amountBMin 有必要再补充说明一下。该值一般是由前端根据预期值和滑点值计算得出的。
+     比如，预期值 amountADesired 为 1000，设置的滑点为 0.5%，
+     那就可以计算得出可接受的最小值 amountAMin 为 1000 * (1 - 0.5%) = 995。
+
+
+
+     第一步是先调用内部函数 _addLiquidity()
+
+
+
+
+
+     // **** ADD LIQUIDITY ****
+         function _addLiquidity(
+             address tokenA,
+             address tokenB,
+             uint256 amountADesired,
+             uint256 amountBDesired,
+             uint256 amountAMin,
+             uint256 amountBMin
+         ) internal virtual returns (uint256 amountA, uint256 amountB) {
+             // create the pair if it doesn't exist yet
+             // 如果不存在 交易对，就创建它`
+             if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
+                 IUniswapV2Factory(factory).createPair(tokenA, tokenB);
+             }
+             // 获取交易兑换率
+             (uint256 reserveA, uint256 reserveB) = UniswapV2Library.getReserves(factory, tokenA, tokenB);
+             if (reserveA == 0 && reserveB == 0) {
+                 (amountA, amountB) = (amountADesired, amountBDesired);
+             } else {
+                 uint256 amountBOptimal = UniswapV2Library.quote(amountADesired, reserveA, reserveB);
+                 if (amountBOptimal <= amountBDesired) {
+                     require(amountBOptimal >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+                     (amountA, amountB) = (amountADesired, amountBOptimal);
+                 } else {
+                     uint256 amountAOptimal = UniswapV2Library.quote(amountBDesired, reserveB, reserveA);
+                     assert(amountAOptimal <= amountADesired);
+                     require(amountAOptimal >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
+                     (amountA, amountB) = (amountAOptimal, amountBDesired);
+                 }
+             }
+         }
+
+该函数的返回值 amountA 和 amountB 是最终需要支付的数量。
+
+   先通过工厂合约查一下这两个 token 的配对合约是否已经存在，如果不存在则先创建该配对合约。接着读取出两个 token 的储备量，
+   如果储备量都为 0，那两个预期支付额就是成交量。否则，根据两个储备量和 tokenA 的预期支付额，
+   计算出需要支付多少 tokenB，如果计算得出的结果值 amountBOptimal 不比 amountBDesired 大，
+   且不会小于 amountBMin，就可将 amountADesired 和该 amountBOptimal 作为结果值返回。
+   如果 amountBOptimal 大于 amountBDesired，则根据 amountBDesired 计算得出需要支付多少 tokenA，
+   得到 amountAOptimal，只要 amountAOptimal 不大于 amountADesired 且不会小于 amountAMin，
+   就可将 amountAOptimal 和 amountBDesired 作为结果值返回。
+
+   再回到 addLiquidity 函数的实现，计算得出两个 token 实际需要支付的数量之后，
+   调用了 UniswapV2Library 的 pairFor 函数计算出配对合约地址，接着就往 pair 地址进行转账了。
+   因为用了 transferFrom 的方式，所以用户调用该函数之前，其实是需要先授权给路由合约的。
+
+   最后再调用 pair 合约的 mint 接口就可以得到流动性代币 liquidity 了。
+
+   以上就是 addLiquidity 的基本逻辑，很简单
+
+
+
+
+
+
+   addLiquidityETH 则支付的其中一个 token 则是 ETH，而不是 ERC20 代币
+
+   function addLiquidityETH(
+           address token,
+           uint256 amountTokenDesired,
+           uint256 amountTokenMin,
+           uint256 amountETHMin,
+           address to,
+           uint256 deadline
+       )
+           external
+           payable
+           virtual
+           override
+           ensure(deadline)
+           returns (
+               uint256 amountToken,
+               uint256 amountETH,
+               uint256 liquidity
+           )
+       {
+           (amountToken, amountETH) = _addLiquidity(
+               token,
+               WETH,
+               amountTokenDesired,
+               msg.value,
+               amountTokenMin,
+               amountETHMin
+           );
+           address pair = UniswapV2Library.pairFor(factory, token, WETH);
+           TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
+           IWETH(WETH).deposit{value: amountETH}();
+           assert(IWETH(WETH).transfer(pair, amountETH));
+           liquidity = IUniswapV2Pair(pair).mint(to);
+           // refund dust eth, if any
+           if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+       }
+
+       入参不再是两个 token 地址，而只有一个 token 地址，因为另一个是以太坊主币 ETH。
+       预期支付的 ETH 金额也是直接从 msg.value 读取的，所以入参里也不需要 ETH 的 Desired 参数。
+       但是会定义 amountETHMin 表示愿意接受成交的 ETH 最小额。
+
+       实现逻辑上，请注意，调用 _addLiquidity 时传入的第二个参数是 WETH。
+       其实，addLiquidityETH 实际上也是将 ETH 转为 WETH 进行处理的。可以看到代码中还有这么一行：
+
+       IWETH(WETH).deposit{value: amountETH}();
+
+       这就是将用户转入的 ETH 转成了 WETH。
+
+       而最后一行代码则会判断，如果一开始支付的 msg.value 大于实际需要支付的金额，多余的部分将返还给用户
+
+
+
+
+
+
+
+
+
+
+
+       移除流动性接口
+       移除流动性本质上就是用流动性代币兑换出配对的两个币。
+
+       移除流动性的接口有 6 个：
+
+       removeLiquidity：和 addLiquidity 相对应，会换回两种 ERC20 代币
+       removeLiquidityETH：和 addLiquidityETH 相对应，换回的其中一种是主币 ETH
+       removeLiquidityWithPermit：也是换回两种 ERC20 代币，但用户会提供签名数据使用 permit 方式完成授权操作
+       removeLiquidityETHWithPermit：也是使用 permit 完成授权操作，换回的其中一种是主币 ETH
+       removeLiquidityETHSupportingFeeOnTransferTokens：名字真长，功能和 removeLiquidityETH 一样，不同的地方在于支持转账时支付费用
+       removeLiquidityETHWithPermitSupportingFeeOnTransferTokens：功能和上一个函数一样，但支持使用链下签名的方式进行授权
+       removeLiquidity 是这些接口中最核心的一个，也是其它几个接口的元接口
+
+
+
+
+
+
+      // **** REMOVE LIQUIDITY ****
+          function removeLiquidity(
+              address tokenA,
+              address tokenB,
+              uint256 liquidity,
+              uint256 amountAMin,
+              uint256 amountBMin,
+              address to,
+              uint256 deadline
+          ) public virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB) {
+              address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+              IUniswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+              (uint256 amount0, uint256 amount1) = IUniswapV2Pair(pair).burn(to);
+              (address token0, ) = UniswapV2Library.sortTokens(tokenA, tokenB);
+              (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
+              require(amountA >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
+              require(amountB >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+          }
+
+          第一行，先计算出 pair 合约地址；第二行，将流动性代币从用户划转到 pair 合约；第三行，
+          执行 pair 合约的 burn 函数实现底层操作，返回了两个代币的数量；第四行对两个代币做下排序；
+          第五行根据排序结果确定 amountA 和 amountB；最后两行检验是否大于滑点计算后的最小值
+
+
+
+
+
+
+    removeLiquidityETH 也同样简单
+    function removeLiquidityETH(
+            address token,
+            uint256 liquidity,
+            uint256 amountTokenMin,
+            uint256 amountETHMin,
+            address to,
+            uint256 deadline
+        ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
+            (amountToken, amountETH) = removeLiquidity(
+                token,
+                WETH,
+                liquidity,
+                amountTokenMin,
+                amountETHMin,
+                address(this),
+                deadline
+            );
+            TransferHelper.safeTransfer(token, to, amountToken);
+            IWETH(WETH).withdraw(amountETH);
+            TransferHelper.safeTransferETH(to, amountETH);
+        }
+
+
+
+
+
+
+   因为流动性池子里实际存储的是 WETH，所以第一步调用 removeLiquidity 时第二个参数传的是 WETH。之后再调用 WETH 的 withdraw 函数将 WETH 转为 ETH，再将 ETH 转给用户。
+
+   removeLiquidityWithPermit 则是使用链下签名进行授权操作的
+
+
+
+   function removeLiquidityWithPermit(
+           address tokenA,
+           address tokenB,
+           uint256 liquidity,
+           uint256 amountAMin,
+           uint256 amountBMin,
+           address to,
+           uint256 deadline,
+           bool approveMax,
+           uint8 v,
+           bytes32 r,
+           bytes32 s
+       ) external virtual override returns (uint256 amountA, uint256 amountB) {
+           address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+           uint256 value = approveMax ? uint256(-1) : liquidity;
+           IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+           (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
+       }
+
+
+
+ 其实就是在调用实际的 removeLiquidity 之前先用 permit 方式完成授权操作。
+
+ removeLiquidityETHWithPermit 也一样的
+
+
+
+
+
+
+
+ 兑换接口
+ 兑换接口则多达 9 个：
+
+ swapExactTokensForTokens：用 ERC20 兑换 ERC20，但支付的数量是指定的，而兑换回的数量则是未确定的
+ swapTokensForExactTokens：也是用 ERC20 兑换 ERC20，与上一个函数不同，指定的是兑换回的数量
+ swapExactETHForTokens：指定 ETH 数量兑换 ERC20
+ swapTokensForExactETH：用 ERC20 兑换成指定数量的 ETH
+ swapExactTokensForETH：用指定数量的 ERC20 兑换 ETH
+ swapETHForExactTokens：用 ETH 兑换指定数量的 ERC20
+ swapExactTokensForTokensSupportingFeeOnTransferTokens：指定数量的 ERC20 兑换 ERC20，支持转账时扣费
+ swapExactETHForTokensSupportingFeeOnTransferTokens：指定数量的 ETH 兑换 ERC20，支持转账时扣费
+ swapExactTokensForETHSupportingFeeOnTransferTokens：指定数量的 ERC20 兑换 ETH，支持转账时扣费
+
+
+
+
+ function swapExactTokensForTokens(
+         uint256 amountIn,
+         uint256 amountOutMin,
+         address[] calldata path,
+         address to,
+         uint256 deadline
+     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
+         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+         TransferHelper.safeTransferFrom(
+             path[0],
+             msg.sender,
+             UniswapV2Library.pairFor(factory, path[0], path[1]),
+             amounts[0]
+         );
+         _swap(amounts, path, to);
+     }
+
+
+     这是指定 amountIn 的兑换，比如用 tokenA 兑换 tokenB，那 amountIn 就是指定支付的 tokenA 的数量，而兑换回来的 tokenB 的数量自然是越多越好。
+
+     关于入参的 path，是由前端 SDK 计算出最优路径后传给合约的
+
+第一行计算出兑换数量，第二行判断是否超过滑动计算后的最小值，第三行将支付的代币转到 pair 合约，第四行再调用兑换的内部函数
+
+function _swap(
+        uint256[] memory amounts,
+        address[] memory path,
+        address _to
+    ) internal virtual {
+        for (uint256 i; i < path.length - 1; i++) {
+            (address input, address output) = (path[i], path[i + 1]);
+            (address token0, ) = UniswapV2Library.sortTokens(input, output);
+            uint256 amountOut = amounts[i + 1];
+            (uint256 amount0Out, uint256 amount1Out) = input == token0
+                ? (uint256(0), amountOut)
+                : (amountOut, uint256(0));
+            address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;
+            IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output)).swap(
+                amount0Out,
+                amount1Out,
+                to,
+                new bytes(0)
+            );
+        }
+    }
+
+    主要就是遍历整个兑换路径，并对路径中每两个配对的 token 调用 pair 合约的兑换函数，实现底层的兑换处理
+
+
+
+
+
+
+
+
+
+swapTokensForExactTokens
+
+function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+        amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
+        require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        TransferHelper.safeTransferFrom(
+            path[0],
+            msg.sender,
+            UniswapV2Library.pairFor(factory, path[0], path[1]),
+            amounts[0]
+        );
+        _swap(amounts, path, to);
+    }
+
+这是指定 amountOut 的兑换，比如用 tokenA 兑换 tokenB，那 amountOut 就是指定想要换回的 tokenB 的数量，
+而需要支付的 tokenA 的数量则是越少越好。因此，其实现代码，第一行其实就是用 amountOut 来计算得出需要多少 amountIn。
+返回的 amounts 数组，第一个元素就是需要支付的 tokenA 数量
+
+
+
+
+ 查询接口
+ 查询接口有 5 个：
+
+ quote
+ getAmountOut
+ getAmountIn
+ getAmountsOut
+ getAmountsIn
+ 这几个查询接口的实现都是直接调用 UniswapV2Library 库对应的函数
+
+
+
+
+
+
+
+
+ TWAP = Time-Weighted Average Price，即时间加权平均价格，可用来创建有效防止价格操纵的链上价格预言机。
+
+
+
+ TWAP 的实现机制其实很简单。首先，在配对合约里会存储三个相关变量：
+
+ price0CumulativeLast 累加
+ price1CumulativeLast
+ blockTimestampLast
+
+ 前两个变量是两个 token 的累加价格，最后一个变量则用来记录更新的区块时间
+
+
+
+UniswapV2Pair 合约的 _update 函数
+ // update reserves and, on the first call per block, price accumulators
+     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
+         require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'UniswapV2: OVERFLOW');
+         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
+             // * never overflows, and + overflow is desired
+             price0CumulativeLast += uint(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;
+             price1CumulativeLast += uint(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
+         }
+         reserve0 = uint112(balance0);
+         reserve1 = uint112(balance1);
+         blockTimestampLast = blockTimestamp;
+         emit Sync(reserve0, reserve1);
+}
+
+每次 mint、burn、swap、sync 时都会触发更新
+
+主要就以下几步：
+
+读取当前的区块时间 blockTimestamp
+计算出与上一次更新的区块时间之间的时间差 timeElapsed
+如果 timeElapsed > 0 且两个 token 的 reserve 都不为 0，则更新两个累加价格
+更新两个 reserve 和区块时间 blockTimestampLast
+
+
+
+先从当前时刻的价格说起，即 token0 和 token1 的当前价格，其实可以根据以下公式计算所得：
+
+price0 = reserve1 / reserve0
+price1 = reserve0 / reserve1
+比如，假设两个 token 分别为 WETH 和 USDT，当前储备量分别为 10 WETH 和 40000 USDT，那么 WETH 和 USDT 的价格分别为：
+
+price0 = 40000/10 = 4000 USDT
+price1 = 10/40000 = 0.00025 WETH
+现在，再加上时间维度来考虑。比如，当前区块时间相比上一次更新的区块时间，过去了 5 秒，那就可以算出这 5 秒时间的累加价格：
+
+price0Cumulative = reserve1 / reserve0 * timeElapsed = 40000/10*5 = 20000 USDT
+price1Cumulative = reserve0 / reserve1 * timeElapsed = 10/40000*5 = 0.00125 WETH
+假设之后再过了 6 秒，最新的 reserve 分别变成了 12 WETH 和 32000 USDT，则最新的累加价格变成了：
+
+price0CumulativeLast = price0Cumulative + reserve1 / reserve0 * timeElapsed = 20000 + 32000/12*6 = 36000 USDT
+price1CumulativeLast = price1Cumulative + reserve0 / reserve1 * timeElapsed = 0.00125 + 12/32000*6 = 0.0035 WETH
+这就是合约里所记录的累加价格了。
+
+
+
+
+为了简化，我们将前面 5 秒时间的时刻记为 T1，累加价格记为 priceT1，而 6 秒时间后的时刻记为 T2，累加价格记为 priceT2。如此，可以计算出，在后面 6 秒时间里的平均价格：
+
+twap = (priceT2 - priceT1)/(T2 - T1) = (36000 - 20000)/6 = 2666.66
+
+
+
+
+
+
+
+
+FlashSwap，翻译过来就是闪电兑换，和闪电贷（FlashLoan）有点类似。
+
+
+一般情况下的兑换流程，是先支付 tokenA，再得到 tokenB。但闪电兑换却可以先得到 tokenB，最后再支付 tokenA
+
+通过闪电兑换，可以实现无前置成本的套利
+
+在 Uniswap 上可以用 3000 DAI 兑换出 1 ETH，而在 Sushi 上可以将 1 ETH 兑换成 3100 DAI，
+这就存在 100 DAI 的套利空间了。但是，如果用户钱包里没有 DAI 的话，该怎么套利呢？通过 Uniswap 的闪电兑换，
+就可以先获得 ETH，再将 ETH 在 Sushi 卖出得到 DAI，最后支付 DAI 给到 Uniswap，这样就实现了无需前置资金成本的套利了。
+
