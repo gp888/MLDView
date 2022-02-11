@@ -75,7 +75,15 @@ event Approval(address indexed _owner, address indexed _spender, uint256 _value)
 
 
 
-=====================================
+
+
+
+
+
+
+
+
+==============================================================================================
 
 ERC721
 
@@ -407,3 +415,225 @@ interface ERC721TokenReceiver {
     /// unless throwing
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns(bytes4);
  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+======================================================================
+
+erc1155
+
+interface ICryptoItems {
+    // Events
+    event Transfer(uint256 indexed _itemId, address indexed _from, address indexed _to, uint256 _value);
+    event Approval(uint256 indexed _itemId, address indexed _owner, address indexed _spender, uint256 _value);
+
+    // Required Functions
+    function transfer(uint256[] _itemId, address[] _to, uint256[] _value) external returns (bool success);
+    function transferFrom(uint256[] _itemId, address[] _from, address[] _to, uint256[] _value) external returns (bool success);
+    function approve(uint256[] _itemId, address[] _spender, uint256[] _value) external returns (bool success);
+    function increaseApproval(uint256[] _itemId, address[] _spender, uint256[] _addedValue) external returns (bool success);
+    function decreaseApproval(uint256[] _itemId, address[] _spender, uint256[] _subtractedValue) external returns (bool success);
+
+    // Required View Functions
+    function totalSupply(uint256 _itemId) external view returns (uint256);
+    function balanceOf(uint256 _itemId, address _owner) external view returns (uint256);
+    function allowance(uint256 _itemId, address _owner, address _spender) external view returns (uint256);
+
+    // Optional View Functions
+    function name(uint256 _itemId) external view returns (string);
+    function symbol(uint256 _itemId) external view returns (string);
+    function decimals(uint256 _itemId) external view returns (uint8);
+
+    // Optional Functions for Non-Fungible Items
+    function ownerOf(uint256 _itemId) external view returns (address);
+    function itemURI(uint256 _itemId) external view returns (string);
+    function itemByIndex(uint256 _itemId, uint256 _index) external view returns (uint256);
+    function itemOfOwnerByIndex(uint256 _itemId, address _owner, uint256 _index) external view returns (uint256);
+}
+
+
+
+transfer
+transfer(uint256[] _itemId, address[] _to, uint256[] _value)
+向目标地址 address[] _to 批量转账 uint256[] _itemId 资产。地址和资产数组的长度要一致，以便一一对应。
+必须同时触发 Transfer 事件。
+
+
+transferFrom
+transferFrom(uint256[] _itemId, address[] _from, address[] _to, uint256[] _value)
+将把批量资产 _itemId[] 从一个或多个地址 _from[] 转移到指定的地址 _to[] 。地址和资产数组的长度要一致，以便一一对应。
+必须触发 Transfer 事件。
+
+
+approve
+approve(uint256[] _itemId, address[] _spender, uint256[] _value)
+批准触发帐户能够代表另一个帐户 address[] _spender 转移批量资产 uint256[] _itemId （使用transferFrom）。地址和资产数组的长度要一致，以便一一对应。
+必须触发Approval事件。
+
+
+increaseApproval
+increaseApproval(uint256[] _itemId, address[] _spender, uint256[] _addedValue)
+增加一个或多个资产的授权量而不需要重置为0.地址和资产数组的长度要一致，以便一一对应。
+必须触发Approval事件。
+
+
+decreaseApproval
+降低一个或多个资产的授权量而不需要重置为0.地址和资产数组的长度要一致，以便一一对应。
+必须触发Approval事件。
+
+name
+name(uint256 _itemId)
+返回每个itemId资产对应的名称，本函数是可选的，但强烈建议要有。
+
+symbol
+返回每个itemId资产对应的标识符，简称，本函数可选的。
+
+decimals
+decimals(uint256 _itemId)
+返回每个itemId资产对应的精度，就是个位数后还有几位，本函数是可选的，但强烈建议要有。
+
+
+totalSupply
+totalSupply(uint256 _itemId)
+返回每个itemId资产对应的供给总量。
+
+
+balanceOf
+balanceOf(uint256 _itemId, address _owner)
+返回一个账号的itemId资产对应的余额量。
+
+
+allowance
+allowance(uint256 _itemId, address _owner, address _spender)
+返回approve授权函数的授权量，是指管理账号 address _owner 授予消费账号 address _spender 对资产 uint256 _itemId 的授权量。
+
+
+ownerOf
+ownerOf(uint256 _itemId)
+返回NFT（非同质化）的特定资产 _itemId 对应的管理账号；
+本函数是可选的。
+
+
+itemURI
+itemURI(uint256 _itemId)
+返回一个特定的 _itemId 资产的独特统一资源标识符[ a distinct Uniform Resource Identifier (URI) ]
+本函数是可选的。
+
+
+itemByIndex
+itemByIndex(uint256 _itemId, uint256 _index)
+返回非同质化资产 _itemId 的 _index 位置的？
+本函数是可选的。
+
+itemOfOwnerByIndex
+itemOfOwnerByIndex(uint256 _itemId, address _owner, uint256 _index)
+返回一个特定管理账号 address _owner 下的资产 _itemId 的索引 uint256 _index 的？
+本函数是可选的。
+
+Non-Fungible Items
+在同一合同中将Fungible和Non-Fungible Items混合在一起的示例策略是在uint256 _itemID参数的前128位中传递item ID ，
+然后使用底部128位用于您希望传递给合同的任何额外数据。非同质化资产可以同使用基于索引的智能合约/项目数据集的附件进行交互。
+可以使用基于索引的标识将非同质化支持与智能合约/项目数据集进行交互。因此，访问混合数据合约中的特定资产集以及该集合中的特定NFT，_itemID可以切分成。
+在合约代码内部，可以使用uint128（~0）提取访问单个NFT所需的两个数据，并将相同的掩码移位128。
+
+Example of split ID bits
+uint256 baseToken = 12345 << 128;
+uint128 index = 50;
+
+balanceOf(baseToken, msg.sender); // 获取基础通证的余额；
+balanceOf(baseToken + index, msg.sender); // 获取非同质化通证索引对应的余额。
+
+
+uint256 baseToken = 12345 << 128;
+uint128 index = 50;
+
+balanceOf(baseToken, msg.sender); // 获取基础通证的余额；
+balanceOf(baseToken + index, msg.sender); // 获取非同质化通证索引对应的余额。
+
+
+
+
+批量转移：一次调用即可转移多个资产。
+批次余额：一次调用即可获取多个资产的余额。
+批量批准：批准所有token到一个地址。
+EIP-165支持：声明支持的接口。
+钩子接口：提供代币接受钩子接口。
+NFT支持：如果供应量仅为1，则将其视为NFT。
+安全转移规则：安全转移的规则集
+
+
+批量转账
+function safeBatchTransferFrom(
+    address _from,
+    address _to,
+    uint256[] calldata _ids,
+    uint256[] calldata _values,
+    bytes calldata _data
+) external;
+
+批量余额
+function balanceOfBatch(
+    address[] calldata _owners,
+    uint256[] calldata _ids
+) external view returns (uint256[] memory);
+
+批量授权
+function setApprovalForAll(
+    address _operator,
+    bool _approved
+) external;
+
+
+
+EIP-1155的接收钩子
+有了EIP-165支持，ERC-1155仅支持智能合约的接收钩子。钩子函数必须返回一个预定义的4字节magic值， 该值指定为：
+
+bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
+
+function onERC1155BatchReceived(
+    address _operator,
+    address _from,
+    uint256[] calldata _ids,
+    uint256[] calldata _values,
+    bytes calldata _data
+) external returns(bytes4);
+
+
+如果代币的发行量为1，那么这种代币本质上是非同质化代币（NFT）。按照ERC-721的标准， 你可以定义元数据URL。客户端可以读取和修改该URL
+
+
+
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+
+contract AirlineTokens is ERC1155 {
+    address public governance;
+    uint256 public airlineCount;
+
+    modifier onlyGovernance() {
+        require(msg.sender == governance, "only governance can call this");
+
+        _;
+    }
+
+    constructor(address governance_) public ERC1155("") {
+        governance = governance_;
+        airlineCount = 0;
+    }
+
+    function addNewAirline(uint256 initialSupply) external onlyGovernance {
+        airlineCount++;
+        uint256 airlineTokenClassId = airlineCount;
+
+        _mint(msg.sender, airlineTokenClassId, initialSupply, "");
+    }
+}
